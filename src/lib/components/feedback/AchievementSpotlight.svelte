@@ -20,7 +20,7 @@
 <style>
 	.spotlight {
 		padding: 0.85rem;
-		border-radius: 0.9rem;
+		border-radius: var(--radius-panel);
 		background:
 			linear-gradient(130deg, color-mix(in oklab, var(--surface-2), #1b365a 35%), var(--surface-2));
 		border: 1px solid color-mix(in oklab, var(--goal-quest), var(--border) 60%);
@@ -52,7 +52,7 @@
 	article {
 		padding: 0.55rem;
 		border: 1px solid var(--border);
-		border-radius: 0.65rem;
+		border-radius: var(--radius-card);
 		background: #131a24;
 	}
 	span {
@@ -66,4 +66,3 @@
 		font-size: 0.95rem;
 	}
 </style>
-

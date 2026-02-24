@@ -1,38 +1,114 @@
-import { ITEM_CATALOG } from '$lib/data/catalog';
+import { browser } from '$app/environment';
+import type { CatalogItem } from '$lib/domain/types';
 
-const priceCache = new Map<number, number>();
+type MappingResponse = Array<{ id: number; name: string; icon?: string }>;
 
-for (const item of ITEM_CATALOG) {
-	priceCache.set(item.itemId, item.basePrice);
+type MappingCachePayload = {
+	savedAt: string;
+	items: CatalogItem[];
+};
+
+const MAPPING_CACHE_KEY = 'osrs-planner:cache:mapping:v1';
+
+let mappingCache: CatalogItem[] = [];
+let mappingLoadedAt = 0;
+const mappingTtlMs = 1000 * 60 * 30;
+
+function iconToImageUrl(icon?: string) {
+	if (!icon) return '/icons/item-placeholder.svg';
+	return `https://oldschool.runescape.wiki/images/Special:FilePath/${encodeURIComponent(icon)}`;
 }
 
-function jitter(seed: number) {
-	const t = Math.floor(Date.now() / (1000 * 60));
-	const base = Math.sin(seed * 0.007 + t * 0.13);
-	return Math.round(base * 0.04 * 1000) / 1000;
+function readMappingCache(): MappingCachePayload | null {
+	if (!browser) return null;
+	try {
+		const raw = window.localStorage.getItem(MAPPING_CACHE_KEY);
+		if (!raw) return null;
+		const parsed = JSON.parse(raw) as MappingCachePayload;
+		if (!Array.isArray(parsed.items)) return null;
+		return parsed;
+	} catch {
+		return null;
+	}
+}
+
+function writeMappingCache(items: CatalogItem[]) {
+	if (!browser) return;
+	const payload: MappingCachePayload = {
+		savedAt: new Date().toISOString(),
+		items
+	};
+	window.localStorage.setItem(MAPPING_CACHE_KEY, JSON.stringify(payload));
+}
+
+async function refreshMappingFromNetwork() {
+	if (!browser) return mappingCache;
+	const res = await fetch('/api/osrs/mapping');
+	if (!res.ok) throw new Error('mapping fetch failed');
+	const data = (await res.json()) as MappingResponse;
+	mappingCache = data.map((row) => ({
+		itemId: row.id,
+		name: row.name,
+		icon: row.icon,
+		imageUrl: iconToImageUrl(row.icon)
+	}));
+	mappingLoadedAt = Date.now();
+	writeMappingCache(mappingCache);
+	return mappingCache;
+}
+
+async function loadMapping(force = false) {
+	if (!browser) return mappingCache;
+
+	const fresh = Date.now() - mappingLoadedAt < mappingTtlMs;
+	if (!force && mappingCache.length > 0 && fresh) return mappingCache;
+
+	if (mappingCache.length === 0) {
+		const cached = readMappingCache();
+		if (cached?.items?.length) {
+			mappingCache = cached.items;
+			mappingLoadedAt = new Date(cached.savedAt).getTime() || 0;
+		}
+	}
+
+	if (force || Date.now() - mappingLoadedAt >= mappingTtlMs) {
+		try {
+			await refreshMappingFromNetwork();
+		} catch {
+			// Keep in-memory/local cached mapping if network fails.
+		}
+	}
+
+	return mappingCache;
 }
 
 export async function searchItems(query: string) {
 	const q = query.trim().toLowerCase();
 	if (!q) return [];
-	return ITEM_CATALOG.filter((item) => item.name.toLowerCase().includes(q)).slice(0, 8);
+	const catalog = await loadMapping(false);
+	if (catalog.length === 0) {
+		try {
+			await loadMapping(true);
+		} catch {
+			// No-op; fallback to empty if fully unavailable.
+		}
+	}
+	return mappingCache.filter((item) => item.name.toLowerCase().includes(q)).slice(0, 8);
 }
 
 export async function fetchLatestPrices(itemIds?: number[]) {
-	const targets = itemIds?.length ? ITEM_CATALOG.filter((i) => itemIds.includes(i.itemId)) : ITEM_CATALOG;
+	if (!browser) return {};
+	const param = itemIds?.length ? `?ids=${itemIds.join(',')}` : '';
+	const res = await fetch(`/api/osrs/latest${param}`);
+	if (!res.ok) throw new Error('latest prices fetch failed');
+	const data = (await res.json()) as {
+		data?: Record<string, { high?: number; low?: number }>;
+	};
 	const out: Record<number, { current?: number; stale?: boolean }> = {};
-
-	for (const item of targets) {
-		const prev = priceCache.get(item.itemId) ?? item.basePrice;
-		const next = Math.max(1, Math.floor(prev * (1 + jitter(item.itemId))));
-		priceCache.set(item.itemId, next);
-		out[item.itemId] = { current: next, stale: false };
+	for (const [idText, row] of Object.entries(data.data ?? {})) {
+		const id = Number(idText);
+		const current = row.high ?? row.low;
+		out[id] = { current, stale: false };
 	}
-
 	return out;
 }
-
-export function getCatalogItem(itemId: number) {
-	return ITEM_CATALOG.find((i) => i.itemId === itemId);
-}
-

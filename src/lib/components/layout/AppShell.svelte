@@ -20,26 +20,43 @@
 
 <style>
 	:global(:root) {
-		--goal-item: #d8b44a;
-		--goal-quest: #4f8de3;
-		--goal-skill: #41b672;
-		--goal-complete: #41b672;
-		--surface-0: #12100e;
-		--surface-1: #1b1916;
-		--surface-2: #25221d;
-		--surface-3: #322d26;
-		--text-1: #f2eee9;
-		--text-2: #b3a89b;
-		--border: #4a4034;
-		--focus: #e6c16f;
-		--font-heading: 'Cinzel', 'Georgia', serif;
-		--font-body: 'Source Sans 3', 'Verdana', sans-serif;
-		--shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.32);
+		--surface-0: #0f1318;
+		--surface-1: #171c23;
+		--surface-2: #1c232c;
+		--surface-3: #242d37;
+
+		--text-1: #e8edf3;
+		--text-2: #a9b3c0;
+		--text-3: #7f8a98;
+
+		/* Muted steel-gray blue accents (less vibrant) */
+		--accent-1: #4c5a6a;
+		--accent-2: #5a697b;
+		--accent-3: #6b7c90;
+
+		--ok: #49b06e;
+		--warn: #d1a052;
+		--danger: #c75b5b;
+
+		--goal-item: #b89a5a;
+		--goal-quest: #6f8fb0;
+		--goal-skill: #5a9a75;
+
+		--border: #33404f;
+		--shadow-hard: 0 8px 0 rgba(0, 0, 0, 0.35), 0 14px 24px rgba(0, 0, 0, 0.28);
+
+		--font-heading: 'Cinzel', Georgia, serif;
+		--font-body: 'Source Sans 3', 'Segoe UI', sans-serif;
+
+		--radius-card: 4px;
+		--radius-panel: 4px;
+		--radius-input: 6px;
+		--radius-button: 6px;
 	}
 	:global(body) {
 		font-family: var(--font-body);
 		margin: 0;
-		background: linear-gradient(180deg, color-mix(in oklab, var(--surface-0), #191512 6%), var(--surface-0));
+		background: linear-gradient(180deg, #0f1318, #111721 62%, #0f1318);
 		color: var(--text-1);
 	}
 	:global(h1),
@@ -50,12 +67,17 @@
 	:global(h6) {
 		font-family: var(--font-heading);
 		font-weight: 600;
-		letter-spacing: 0.02em;
+		letter-spacing: 0.015em;
+	}
+	:global(*),
+	:global(*::before),
+	:global(*::after) {
+		box-sizing: border-box;
 	}
 	:global(*:focus-visible) {
-		outline: 2px solid var(--focus);
+		outline: 2px solid var(--accent-3);
 		outline-offset: 2px;
-		border-radius: 0.18rem;
+		border-radius: 2px;
 	}
 	.shell {
 		display: flex;
@@ -64,7 +86,7 @@
 	main {
 		flex: 1;
 		padding: 1rem 1rem 4.75rem;
-		max-width: 1100px;
+		max-width: 1120px;
 		width: 100%;
 		margin: 0 auto;
 	}

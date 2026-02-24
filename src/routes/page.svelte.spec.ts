@@ -4,10 +4,10 @@ import { render } from 'vitest-browser-svelte';
 import Page from './+page.svelte';
 
 describe('/+page.svelte', () => {
-	it('should render dashboard heading', async () => {
+	it('should render home heading', async () => {
 		render(Page);
 		
-		const heading = page.getByRole('heading', { name: 'Dashboard' });
+		const heading = page.getByRole('heading', { name: 'Home' });
 		await expect.element(heading).toBeInTheDocument();
 	});
 });

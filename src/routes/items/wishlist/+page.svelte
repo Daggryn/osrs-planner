@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
+	import { onMount } from 'svelte';
 	import GoalCard from '$lib/components/goals/GoalCard.svelte';
 	import ReconciliationBanner from '$lib/components/feedback/ReconciliationBanner.svelte';
 	import TypeaheadItemSearch from '$lib/components/items/TypeaheadItemSearch.svelte';
@@ -17,6 +18,15 @@
 	$: sorted = sortByCheapest(withProgress);
 	$: grouped = splitCompleted(sorted);
 
+	let timer: ReturnType<typeof setInterval> | undefined;
+	onMount(() => {
+		refresh();
+		timer = setInterval(refresh, 60000);
+		return () => {
+			if (timer) clearInterval(timer);
+		};
+	});
+
 	async function refresh() {
 		const latest = await priceStore.refresh(state.itemGoals.map((g) => g.itemId));
 		plannerStore.updateItemPrices(latest);
@@ -26,8 +36,8 @@
 		plannerStore.addItemGoal({
 			itemId: e.detail.itemId,
 			name: e.detail.name,
-			iconUrl: e.detail.icon,
-			price: e.detail.basePrice
+			imageUrl: e.detail.imageUrl,
+			price: e.detail.currentPrice
 		});
 		feedbackStore.push({ title: 'Goal added', goalName: e.detail.name, goalType: 'item' });
 	}
@@ -40,7 +50,7 @@
 			goalId: found.id,
 			itemId: found.itemId,
 			name: found.title,
-			iconUrl: found.iconUrl
+			iconUrl: found.imageUrl
 		});
 		feedbackStore.push({ title: 'Goal achieved', goalName: found.title, goalType: 'item' });
 	}
@@ -58,7 +68,7 @@
 <section class="page">
 	<header>
 		<h2>Item Goals</h2>
-		<p>Track your planned upgrades and complete them when you obtain the item.</p>
+		<p>Track upgrades and complete goals as you obtain items.</p>
 	</header>
 
 	<ReconciliationBanner count={queue.length} onOpenBank={() => goto('/items/bank')} />
@@ -117,7 +127,6 @@
 	header h2 {
 		margin: 0;
 		font-size: 1.42rem;
-		letter-spacing: 0.04em;
 	}
 	header p {
 		margin: 0.2rem 0 0;
@@ -127,9 +136,10 @@
 		display: grid;
 		gap: 0.5rem;
 		border: 1px solid var(--border);
-		background: linear-gradient(190deg, var(--surface-2), color-mix(in oklab, var(--surface-2), #100e0b 11%));
-		padding: 0.82rem;
-		border-radius: 0.42rem;
+		background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
+		padding: 0.75rem;
+		border-radius: var(--radius-panel);
+		box-shadow: var(--shadow-hard);
 	}
 	.controls-row {
 		display: flex;
@@ -138,15 +148,12 @@
 	}
 	button {
 		border: 1px solid var(--border);
-		background: color-mix(in oklab, var(--surface-1), #fff 3%);
+		background: var(--surface-2);
 		color: var(--text-1);
-		padding: 0.55rem 0.8rem;
-		border-radius: 0.34rem;
+		padding: 0.5rem 0.72rem;
+		border-radius: var(--radius-button);
 		cursor: pointer;
 		font-family: var(--font-heading);
-	}
-	.toolbar-btn:hover:not(:disabled) {
-		border-color: color-mix(in oklab, var(--goal-item), var(--border) 62%);
 	}
 	button:disabled {
 		opacity: 0.7;
@@ -155,7 +162,6 @@
 	.goal-section {
 		display: grid;
 		gap: 0.55rem;
-		padding-top: 0.25rem;
 	}
 	.section-head {
 		display: flex;
@@ -170,20 +176,17 @@
 		font-size: 0.66rem;
 	}
 	h3 {
-		margin: 0 0 0.5rem;
+		margin: 0;
 		font-size: 1rem;
 	}
 	.cards {
 		display: grid;
-		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-		gap: 0.72rem;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+		gap: 0.65rem;
 	}
 	.muted {
 		margin: 0;
 		color: var(--text-2);
-		padding: 0.45rem 0.2rem;
-	}
-	@media (min-width: 900px) {
-		.controls-row { justify-content: flex-end; }
+		padding: 0.4rem 0.2rem;
 	}
 </style>

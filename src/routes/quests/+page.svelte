@@ -1,33 +1,58 @@
+<script lang="ts">
+	import GoalCard from '$lib/components/goals/GoalCard.svelte';
+	import { plannerStore } from '$lib/stores/plannerStore';
+
+	$: planner = $plannerStore;
+	$: questGoals = planner.questGoals;
+	$: subGoalRows = questGoals.flatMap((goal) =>
+		(goal.subGoals ?? []).map((sub) => ({
+			...sub,
+			mainGoalTitle: goal.title
+		}))
+	);
+</script>
+
 <section class="page">
 	<header>
 		<h2>Quest Goals</h2>
-		<p>Quest progress will be API-synced and dependency-aware in a later phase.</p>
+		<p>Quest requirements are fetched and shown as sub-goals under each main quest goal.</p>
 	</header>
-	<div class="hybrid">
-		<article class="preview">
-			<p class="eyebrow">Preview card</p>
-			<h3>Song of the Elves</h3>
-			<div class="bar"><span style="width: 62%"></span></div>
-			<ul>
-				<li>✓ Mourning's End Part II</li>
-				<li>• 70 Agility</li>
-			</ul>
-		</article>
-		<article class="roadmap">
-			<h3>Planned in next phase</h3>
-			<ul>
-				<li>Auto-fetch requirements and prerequisite quests</li>
-				<li>Sub-goal checklist inside each quest goal card</li>
-				<li>Dependency completion rolls up to parent quest progress</li>
-			</ul>
-		</article>
-	</div>
+
+	<section>
+		<h3>Main goals</h3>
+		<div class="cards">
+			{#if questGoals.length === 0}
+				<p class="muted">No quest goals yet.</p>
+			{/if}
+			{#each questGoals as goal (goal.id)}
+				<GoalCard goal={goal} />
+			{/each}
+		</div>
+	</section>
+
+	<section>
+		<h3>Requirement sub-goals</h3>
+		<div class="subgoals">
+			{#if subGoalRows.length === 0}
+				<p class="muted">No requirement sub-goals yet.</p>
+			{/if}
+			{#each subGoalRows as sub (sub.id)}
+				<article class="subgoal {sub.completed ? 'done' : ''}">
+					<p class="label">{sub.label}</p>
+					<div class="meta">
+						<span class="kind">{sub.kind === 'skill_requirement' ? 'Skill req' : 'Quest req'}</span>
+						<span class="tag">for {sub.mainGoalTitle}</span>
+					</div>
+				</article>
+			{/each}
+		</div>
+	</section>
 </section>
 
 <style>
 	.page {
 		display: grid;
-		gap: 1rem;
+		gap: 0.95rem;
 	}
 	header h2,
 	h3 {
@@ -36,58 +61,51 @@
 	header p {
 		margin: 0.2rem 0 0;
 		color: var(--text-2);
-		max-width: 56ch;
 	}
-	.hybrid {
+	.cards {
 		display: grid;
-		gap: 0.8rem;
+		gap: 0.65rem;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
 	}
-	article {
+	.subgoals {
+		display: grid;
+		gap: 0.5rem;
+		grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
+	}
+	.subgoal {
+		border: 1px dashed color-mix(in oklab, var(--goal-quest), var(--border) 45%);
+		background: linear-gradient(160deg, var(--surface-2), var(--surface-1));
+		border-radius: var(--radius-card);
+		padding: 0.55rem;
+		display: grid;
+		gap: 0.35rem;
+	}
+	.subgoal.done {
+		opacity: 0.78;
+	}
+	.label {
+		margin: 0;
+		font-family: var(--font-heading);
+		font-size: 0.9rem;
+	}
+	.meta {
+		display: flex;
+		justify-content: space-between;
+		gap: 0.45rem;
+		align-items: center;
+		font-size: 0.72rem;
+	}
+	.kind {
+		color: var(--text-2);
+	}
+	.tag {
+		color: var(--text-1);
 		border: 1px solid var(--border);
-		background: var(--surface-2);
-		border-radius: 0.9rem;
-		padding: 0.85rem;
+		padding: 0.06rem 0.3rem;
+		border-radius: var(--radius-button);
 	}
-	.preview {
-		border-left: 4px solid var(--goal-quest);
-	}
-	.eyebrow {
+	.muted {
 		margin: 0;
 		color: var(--text-2);
-		letter-spacing: 0.07em;
-		text-transform: uppercase;
-		font-size: 0.67rem;
-	}
-	.preview h3 {
-		margin-top: 0.25rem;
-	}
-	.bar {
-		margin-top: 0.55rem;
-		height: 0.45rem;
-		border: 1px solid var(--border);
-		border-radius: 999px;
-		overflow: hidden;
-		background: #0f1520;
-	}
-	.bar span {
-		display: block;
-		height: 100%;
-		background: var(--goal-quest);
-	}
-	.preview ul {
-		margin-top: 0.65rem;
-	}
-	.roadmap {
-		border-left: 4px solid color-mix(in oklab, var(--goal-quest), var(--border) 38%);
-	}
-	ul {
-		margin: 0.45rem 0 0;
-		padding-left: 1rem;
-		color: var(--text-2);
-	}
-	@media (min-width: 900px) {
-		.hybrid {
-			grid-template-columns: 1fr 1.1fr;
-		}
 	}
 </style>

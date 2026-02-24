@@ -16,7 +16,7 @@
 	.banner {
 		border: 1px solid color-mix(in oklab, var(--goal-item), var(--border) 55%);
 		background: color-mix(in oklab, var(--surface-2), #2f2411 20%);
-		border-radius: 0.38rem;
+		border-radius: var(--radius-panel);
 		padding: 0.75rem;
 		display: flex;
 		justify-content: space-between;
@@ -37,7 +37,7 @@
 		background: color-mix(in oklab, var(--surface-1), #fff 3%);
 		color: var(--text-1);
 		padding: 0.5rem 0.7rem;
-		border-radius: 0.3rem;
+		border-radius: var(--radius-button);
 		cursor: pointer;
 		white-space: nowrap;
 		font-family: var(--font-heading);

@@ -2,6 +2,7 @@
 	import { createEventDispatcher } from 'svelte';
 	import { searchItems } from '$lib/services/pricing';
 	import type { CatalogItem } from '$lib/domain/types';
+
 	let { placeholder = 'Search items...' } = $props<{ placeholder?: string }>();
 	const dispatch = createEventDispatcher<{ select: CatalogItem }>();
 	let query = $state('');
@@ -41,7 +42,7 @@
 			{:else}
 				{#each results as item}
 					<button onclick={() => handleAdd(item)}>
-						<span>{item.icon}</span>
+						<img src={item.imageUrl ?? '/icons/item-placeholder.svg'} alt="" onerror={(e) => ((e.currentTarget as HTMLImageElement).src = '/icons/item-placeholder.svg')} />
 						<span>{item.name}</span>
 					</button>
 				{/each}
@@ -53,27 +54,32 @@
 <style>
 	.search {
 		position: relative;
+		width: 100%;
+		box-sizing: border-box;
 	}
 	input {
+		box-sizing: border-box;
 		width: 100%;
 		padding: 0.65rem 0.75rem;
-		border-radius: 0.65rem;
+		border-radius: var(--radius-input);
 		border: 1px solid var(--border);
-		background: #121a24;
+		background: var(--surface-1);
 		color: var(--text-1);
+		font-family: var(--font-body);
 	}
 	.results {
 		position: absolute;
 		left: 0;
 		right: 0;
 		top: calc(100% + 0.35rem);
-		background: #101722;
+		background: var(--surface-1);
 		border: 1px solid var(--border);
-		border-radius: 0.65rem;
-		padding: 0.4rem;
+		border-radius: var(--radius-input);
+		padding: 0.35rem;
 		display: grid;
-		gap: 0.22rem;
+		gap: 0.2rem;
 		z-index: 30;
+		box-shadow: var(--shadow-hard);
 	}
 	p {
 		margin: 0;
@@ -82,17 +88,22 @@
 	}
 	button {
 		display: flex;
-		gap: 0.55rem;
+		gap: 0.5rem;
 		align-items: center;
 		text-align: left;
 		border: 0;
 		background: transparent;
 		color: var(--text-1);
-		padding: 0.45rem;
-		border-radius: 0.5rem;
+		padding: 0.4rem;
+		border-radius: var(--radius-input);
 		cursor: pointer;
 	}
 	button:hover {
-		background: #1d2735;
+		background: var(--surface-3);
+	}
+	img {
+		width: 1.2rem;
+		height: 1.2rem;
+		object-fit: contain;
 	}
 </style>

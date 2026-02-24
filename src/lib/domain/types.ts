@@ -6,6 +6,8 @@ export type SubGoal = {
 	id: string;
 	label: string;
 	completed: boolean;
+	kind?: 'quest_requirement' | 'skill_requirement';
+	parentGoalTitle?: string;
 };
 
 export type Goal = {
@@ -15,6 +17,7 @@ export type Goal = {
 	status: GoalStatus;
 	progressPct: number;
 	completedAt?: string;
+	createdAt: string;
 	updatedAt: string;
 	subGoals?: SubGoal[];
 };
@@ -22,7 +25,7 @@ export type Goal = {
 export type ItemGoal = Goal & {
 	type: 'item';
 	itemId: number;
-	iconUrl?: string;
+	imageUrl?: string;
 	currentPrice?: number;
 	lastKnownPrice?: number;
 	priceStale?: boolean;
@@ -32,25 +35,39 @@ export type ItemGoal = Goal & {
 
 export type QuestGoal = Goal & {
 	type: 'quest';
+	requirements: {
+		questIds: string[];
+		skillReqs: Array<{ skill: string; level: number }>;
+	};
+	completedQuestReqIds: string[];
+	completedSkillReqs: Array<{ skill: string; level: number }>;
 };
 
 export type SkillGoal = Goal & {
 	type: 'skill';
-	levelCurrent: number;
-	levelTarget: number;
+	skill: string;
+	startLevel: number;
+	startXp: number;
+	currentLevel: number;
+	currentXp: number;
+	targetLevel: number;
+	targetXp: number;
+	iconUrl?: string;
 };
 
 export type BankItem = {
 	itemId: number;
 	name: string;
-	iconUrl?: string;
+	imageUrl?: string;
 	quantity: number;
+	currentPrice?: number;
+	lastKnownPrice?: number;
 };
 
 export type CatalogItem = {
 	itemId: number;
 	name: string;
-	icon: string;
-	basePrice: number;
+	icon?: string;
+	imageUrl?: string;
+	currentPrice?: number;
 };
-

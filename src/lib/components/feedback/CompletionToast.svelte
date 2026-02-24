@@ -12,9 +12,10 @@
 	.toast {
 		padding: 0.75rem 0.85rem;
 		border: 1px solid var(--border);
-		border-radius: 0.7rem;
+		border-radius: var(--radius-panel);
 		background: var(--surface-2);
 		min-width: 13rem;
+		box-shadow: var(--shadow-hard);
 	}
 	.title {
 		margin: 0;
@@ -37,4 +38,3 @@
 		border-color: color-mix(in oklab, var(--goal-skill), var(--border) 55%);
 	}
 </style>
-

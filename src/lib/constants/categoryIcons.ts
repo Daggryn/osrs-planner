@@ -5,4 +5,3 @@ export const categoryIcons: Record<GoalType, string> = {
 	quest: 'https://oldschool.runescape.wiki/images/Special:FilePath/Quest_tab.png',
 	skill: 'https://oldschool.runescape.wiki/images/Special:FilePath/Stats_tab.png'
 };
-

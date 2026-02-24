@@ -1,0 +1,8 @@
+price is left aligned - want center
+item images arent there
+quest requirements that auto populate from quests are good, but need to cascade, so X needs Y, but Y needs Z,A,B etc. these get collapsed on the main card when completed.
+skill requirements for quests are not working
+in the quest page you do not need to refer to the parent quest for quest requirements when listed in the main goal card (its obvious)
+prices still arent working (all prive unavailble)
+the icons for items, quests, and skills still arent correct.
+requirements in main goal cards should be left aligned.

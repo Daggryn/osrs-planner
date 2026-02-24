@@ -1,11 +1,10 @@
 <script lang="ts">
+	import { formatGp } from '$lib/stores/selectors';
 	let { price, stale = false } = $props<{ price?: number; stale?: boolean }>();
-	const formatGp = (value?: number) =>
-		typeof value === 'number' ? `${Math.floor(value).toLocaleString()} gp` : 'Price unavailable';
 </script>
 
 <p class="price">
-	{formatGp(price)}
+	{typeof price === 'number' ? formatGp(price) : 'Price unavailable'}
 	{#if stale}<span>stale</span>{/if}
 </p>
 
@@ -17,13 +16,13 @@
 		display: inline-flex;
 		gap: 0.35rem;
 		align-items: center;
+		font-family: var(--font-body);
 	}
 	span {
-		font-size: 0.65rem;
-		padding: 0.08rem 0.35rem;
+		font-size: 0.62rem;
+		padding: 0.08rem 0.32rem;
 		border: 1px solid var(--border);
 		border-radius: 999px;
-		color: var(--text-2);
+		color: var(--text-3);
 	}
 </style>
-

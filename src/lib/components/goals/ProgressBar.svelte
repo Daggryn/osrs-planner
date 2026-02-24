@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { progressColor } from '$lib/stores/selectors';
 	let { value, secondaryValue, label } = $props<{
 		value: number;
 		secondaryValue?: number;
@@ -7,29 +8,20 @@
 	const clampPct = (num: number) => Math.max(0, Math.min(100, Math.floor(num)));
 	const pct = $derived(clampPct(value));
 	const secondaryPct = $derived(typeof secondaryValue === 'number' ? clampPct(secondaryValue) : undefined);
-	const goldPct = $derived(secondaryPct === undefined ? pct : Math.min(pct, secondaryPct));
-	const powerPct = $derived(secondaryPct === undefined ? pct : Math.max(pct, secondaryPct));
-	const boostWidth = $derived(Math.max(0, powerPct - goldPct));
-	const displayPct = $derived(secondaryPct === undefined ? pct : powerPct);
-
-	const rampColor = (num: number) => {
-		const hue = Math.round((num / 100) * 120);
-		return `hsl(${hue} 64% 45%)`;
-	};
+	const basePct = $derived(secondaryPct === undefined ? pct : Math.min(pct, secondaryPct));
+	const fullPct = $derived(secondaryPct === undefined ? pct : Math.max(pct, secondaryPct));
+	const boostWidth = $derived(Math.max(0, fullPct - basePct));
 </script>
 
 <div class="progress-wrap">
 	{#if label}<p>{label}</p>{/if}
-	<span>{displayPct}%</span>
+	<span>{fullPct}%</span>
 	<div class="track">
 		{#if secondaryPct === undefined}
-			<div class="bar" style={`width:${pct}%; background:${rampColor(pct)};`}></div>
+			<div class="bar" style={`width:${pct}%; background:${progressColor(pct)};`}></div>
 		{:else}
-			<div class="bar gold" style={`width:${goldPct}%; background:${rampColor(goldPct)};`}></div>
-			<div
-				class="bar power"
-				style={`left:${goldPct}%; width:${boostWidth}%; background:${rampColor(powerPct)};`}
-			></div>
+			<div class="bar" style={`width:${basePct}%; background:${progressColor(basePct)}; opacity:0.7;`}></div>
+			<div class="bar" style={`left:${basePct}%; width:${boostWidth}%; background:${progressColor(fullPct)};`}></div>
 		{/if}
 	</div>
 </div>
@@ -38,21 +30,22 @@
 	.progress-wrap {
 		display: grid;
 		gap: 0.2rem;
+		justify-items: center;
 	}
 	p {
 		margin: 0;
 		color: var(--text-2);
-		font-size: 0.75rem;
+		font-size: 0.73rem;
 	}
 	span {
-		font-size: 0.72rem;
+		font-size: 0.71rem;
 		color: var(--text-2);
-		justify-self: end;
 	}
 	.track {
-		height: 0.42rem;
-		border-radius: 0.25rem;
-		background: #0d131b;
+		width: 100%;
+		height: 0.45rem;
+		border-radius: 3px;
+		background: #10161f;
 		border: 1px solid var(--border);
 		overflow: hidden;
 		position: relative;
@@ -62,11 +55,5 @@
 		position: absolute;
 		top: 0;
 		left: 0;
-	}
-	.bar.gold {
-		opacity: 0.82;
-	}
-	.bar.power {
-		opacity: 0.95;
 	}
 </style>

@@ -1,201 +1,98 @@
-# OSRS Planner Chat Transcript
+# Chat Transcript (Codex Session)
 
-Date captured: 2026-02-24
+## Project
+OSRS Goal Planner (SvelteKit)
 
-Note: This transcript includes the user/assistant conversation content from this thread (not internal tool logs/system prompts).
+## Timeline Transcript
 
----
+### 1) Product vision and scope
+You provided a full “Source of Truth / Vision Document”:
+- OSRS progression planner, not trade simulator
+- Gold is user-authoritative
+- Wishlist and Bank are intentionally separate
+- Dashboard-first planning UX
+- MVP: item wishlist + live prices + bank modeling + affordability
+- Future: quest goals, skill goals, dependencies, richer planning support
 
-## User
+### 2) UX direction and behavior
+You clarified:
+- Core app is goal tracking and goal completion satisfaction
+- Consistent feeling across item/quest/skill goals
+- Default hide completed, with toggle to show completed below active
+- Persistent reconciliation banner for newly completed item goals in-session
+- Banner click should route to Bank flow
+- Larger impactful cards, responsive layout, sidebar desktop + bottom tabs mobile
+- Goal type colors: items gold, quests blue, skills green
+- Progress bars on cards, celebration for main goal completions
+- Sub-goals should be subtle and visually secondary
 
-i have a lot of comments for the current state of the app. I also want to go through some visual design choices/options.
+### 3) Dashboard/Home requirements
+You requested:
+- Rename Dashboard to Home
+- Progress since last visit section
+- Market section: top wishlist drops + top bank gains
+- Three goal rows (items/quests/skills) sorted by closeness to completion
+- Header trackers:
+  - Items: bank gp / wishlist total
+  - Quests: deduped quest req progress + skill req progress
+  - Skills: levels gained / levels needed from goal baseline
+- Prominent New Goal CTA on Home
 
-we spoke about this app but locally on another machine, could you take a look at the 2 md files to see the context for what i want, and compare it against what's been made so far to get an idea of the current progress
+### 4) Theming and icon direction
+You requested:
+- More OSRS-themed visuals, less RS3-like
+- Dark, muted palette (no vibrant blue)
+- Real OSRS tab icons for quest/skill/inventory
+- Coins icon for item tracker
+- Real item images from OSRS mapping/API
 
-## Assistant
+### 5) Regression/fix requests
+You reported issues and asked for fixes:
+- Progress bars no longer bottom-clamped
+- Prices unreliable / showing unavailable too often
+- Item images missing
+- Dummy quest requirements incorrect
+- Quest/skill goal creation needs autocomplete
+- Theme first-paint flash (blue before dark)
+- Keep caching changes for fallback resilience
 
-Current state is solidly scaffolded and partially feature-complete, with Items/Bank much further along than Quests/Skills.
+### 6) Implemented in this workspace
+Implemented and validated:
+- Added `GET /api/osrs/quests` for canonical quest autocomplete list
+- Added `GET /api/osrs/skills` for canonical skill autocomplete list
+- Updated `NewGoalModal`:
+  - quest autocomplete
+  - skill autocomplete
+  - quest metadata fetch + requirement autofill preview/edit flow
+- Added seed quest one-time autocorrect in planner store:
+  - detects seed quest IDs
+  - fetches quest metadata
+  - replaces requirements, regenerates sub-goals, recomputes progress
+  - persists autocorrect marker
+- Updated Home tracker icon for items to coins
+- Restored card footer anchoring in `GoalCard`:
+  - centered item action near bottom
+  - progress bars clamped to bottom
+- Improved API failure semantics:
+  - `/api/osrs/latest` now returns error status on upstream failure
+  - `/api/osrs/mapping` returns server cache when available, otherwise error
+- Improved `priceStore` fallback behavior:
+  - preserve last-known values
+  - return merged stale values on failure
+  - avoid wiping to unavailable when known values exist
+- Improved quest requirement parsing in `/api/osrs/quest-meta`:
+  - parse requirement section more specifically
+  - filter quest reqs against canonical quest titles
+  - avoid self-referential quest requirement
 
-Progress summary vs docs:
-- Foundation and route/store/component scaffolding mostly in place.
-- Item goals and bank flows mostly implemented.
-- Dashboard partially implemented.
-- Quests/skills still placeholder-level.
-- Main gaps included typeahead keyboard support, stale-price behavior guarantees, dedicated subgoal component, and minimal tests.
+### 7) Validation
+- Ran `npm run check`
+- Result: 0 errors, 0 warnings
 
----
+### 8) Plan-mode interlude
+- You asked to replace `CHAT_TRANSCRIPT.md`.
+- I temporarily could not edit because session was in Plan Mode.
+- You then switched me back to Default mode and asked me to proceed.
 
-## User
-
-great lets begin
-
-## Assistant
-
-Asked alignment questions and produced a plan that locked:
-- First focus: behavior gaps
-- Deliverable shape: design critique first
-- Visual baseline: dark minimal + gamified
-- Guardrail: readability first
-- Option depth: 3 options per section
-
-Produced a decision-complete `<proposed_plan>` for visual-first audit + behavior-gap backlog.
-
----
-
-## User
-
-PLEASE IMPLEMENT THIS PLAN: (visual-first review + behavior-gap matrix + implementation spec)
-
-## Assistant
-
-Delivered:
-- Visual audit (App shell/nav, Dashboard, Wishlist, Bank, Quests/Skills) with 3 options each + recommendations.
-- Severity-ranked behavior-gap matrix (P0/P1/P2) with file targets.
-- Sequenced implementation work packages (WP1..WP6) with acceptance/tests.
-
----
-
-## User
-
-WP5
-
-## Assistant
-
-Implemented WP5 visual pass in code and validated.
-
-Files changed in that pass:
-- `src/lib/components/layout/AppShell.svelte`
-- `src/lib/components/layout/SidebarNav.svelte`
-- `src/routes/+page.svelte`
-- `src/routes/items/wishlist/+page.svelte`
-- `src/routes/items/bank/+page.svelte`
-- `src/routes/quests/+page.svelte`
-- `src/routes/skills/+page.svelte`
-
-Validation:
-- `npm run check` passed.
-
----
-
-## User
-
-i do not like the theme/design still. i would like to make small incremental changes...
-
-Key feedback included:
-- Remove blue tint/background treatment and tags.
-- More OSRS-themed and less generic.
-- Different font.
-- Taller cards.
-- Main category icons.
-- Bank grouped with Item Goals in nav.
-- Clear add-goal flow on dashboard (empty and non-empty states).
-- Start with CSS redesign first.
-
-## Assistant
-
-Proposed incremental scope and asked preference locks.
-
----
-
-## User
-
-Requested blend: OSRS theme + dark minimalist, neutral backgrounds, OSRS fonts/icons, vibrant accents selectively.
-
-## Assistant
-
-Provided refined `<proposed_plan>`:
-- Dark minimal base + OSRS identity accents.
-- Subtle accents by default.
-- Serif headings only.
-- Increment 1: global theme rebalance, nav grouping + icons, remove tag-heavy look, medium card height increase, dashboard header identity.
-
----
-
-## User
-
-PLEASE IMPLEMENT THIS PLAN: Refined Increment 1 Plan...
-
-## Assistant
-
-Implemented refined increment 1:
-- Added `src/lib/constants/categoryIcons.ts`
-- Added Google font links in `src/app.html`
-- Reworked global tokens/background/typography in `AppShell`
-- Reworked sidebar grouping/icons
-- Removed dashboard/wishlist tag-heavy styles
-- Increased card min heights in `GoalCard`
-- Added dashboard category header icons
-- Added item tabs layout structure later as needed
-
-Validation:
-- `npm run check` passed.
-
----
-
-## User
-
-Large adjustment request with specific design/UX details:
-- Remove grid texture background.
-- Less rounding globally.
-- Header paragraph width should be responsive (not constrained).
-- Replace corporate wording ("liquid assets", "purchasing power").
-- Bank items should keep item-card style.
-- Full border indicates goal type (not left side only).
-- Item Goals clickable in nav; hide wishlist/bank in sidebar; use top tabs in item pages.
-- Remove nav box around OSRS Planner.
-- Use the new font for goal titles and nav.
-- Replace two item progress bars with one stacked two-color bar.
-- Refresh button separated from add item; show completed should be button (not checkbox).
-- Duplicate item goals allowed when prior one completed (but not two active duplicates).
-- Stronger OSRS feel.
-- Progress bar placement tweaks and centered goal names.
-- Progress bars red->green based on completion (not goal type).
-- Gold input: hide browser number steppers, support k/m/b suffixes.
-
-## Assistant
-
-Implemented requested changes.
-
-### Core implemented outcomes
-- Background texture removed; neutral dark background retained.
-- Reduced rounding in key updated components.
-- Removed header max-width constraints on updated pages.
-- Terminology replaced in bank/reconcile UI copy.
-- Bank items switched to card-style blocks.
-- Goal-type coloring moved to full card border.
-- Sidebar simplified: Item Goals clickable; wishlist/bank removed from sidebar.
-- Added top tabs for item pages via `src/routes/items/+layout.svelte`.
-- Nav/goal title typography uses heading font.
-- Item card uses a single stacked progress bar for gold + bank contribution.
-- Progress bars now red->green by completion percentage.
-- Progress percent shown above bar; bar moved near card bottom edge.
-- Goal names centered in cards.
-- Wishlist controls changed: refresh separate from add input; show-completed is toggle button.
-- Duplicate active item goals blocked; completed duplicate re-add allowed.
-- Gold input switched to text, supports `k`, `m`, `b` parsing.
-
-### Files touched in this phase
-- `src/lib/components/layout/AppShell.svelte`
-- `src/lib/components/layout/SidebarNav.svelte`
-- `src/routes/items/+layout.svelte` (new)
-- `src/lib/components/goals/ProgressBar.svelte`
-- `src/lib/components/goals/GoalCard.svelte`
-- `src/routes/items/wishlist/+page.svelte`
-- `src/routes/items/bank/+page.svelte`
-- `src/lib/components/feedback/ReconciliationBanner.svelte`
-- `src/lib/stores/plannerStore.ts`
-- `src/routes/+page.svelte`
-
-Validation:
-- `npm run check` passed with 0 errors, 0 warnings.
-
----
-
-## User
-
-can you put this whole chat into an md file so i can pick this back up on a different machine
-
-## Assistant
-
-Created this file: `CHAT_TRANSCRIPT.md`.
-
+### 9) Current action
+- `CHAT_TRANSCRIPT.md` has now been replaced with this transcript for cross-machine continuity.
