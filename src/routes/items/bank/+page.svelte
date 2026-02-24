@@ -9,15 +9,30 @@
 	import type { CatalogItem } from '$lib/domain/types';
 
 	let goldInput: HTMLInputElement | undefined;
-	let draftGold = 0;
+	let draftGoldInput = '0';
+	let isGoldEditing = false;
 
 	$: planner = $plannerStore;
 	$: queue = $sessionStore.reconciliationQueue;
-	$: draftGold = planner.gold;
 	$: total = bankValue(planner.gold, planner.bankItems, $priceStore.items);
+	$: if (!isGoldEditing) draftGoldInput = planner.gold.toString();
+
+	function parseGoldInput(raw: string) {
+		const normalized = raw.trim().toLowerCase().replace(/,/g, '');
+		const match = normalized.match(/^(\d+(?:\.\d+)?)([kmb])?$/);
+		if (!match) return planner.gold;
+
+		const base = Number(match[1]);
+		if (!Number.isFinite(base)) return planner.gold;
+
+		const multiplier = match[2] === 'k' ? 1_000 : match[2] === 'm' ? 1_000_000 : match[2] === 'b' ? 1_000_000_000 : 1;
+		return Math.max(0, Math.floor(base * multiplier));
+	}
 
 	function saveGold() {
-		plannerStore.setGold(draftGold);
+		const parsed = parseGoldInput(draftGoldInput);
+		plannerStore.setGold(parsed);
+		draftGoldInput = parsed.toString();
 	}
 
 	function addBankItem(e: CustomEvent<CatalogItem>) {
@@ -39,32 +54,42 @@
 <section class="page">
 	<header>
 		<h2>Bank</h2>
-		<p>Gold is your source of truth. Bank items count as assets you are willing to sell.</p>
+		<p>Gold is your source of truth. Bank items count if you are willing to sell them.</p>
 	</header>
 
 	<section class="panel gold">
-		<label for="gold">Gold</label>
+		<div class="step-head">
+			<span>Step 1</span>
+			<label for="gold">Update gold</label>
+		</div>
 		<input
 			bind:this={goldInput}
 			id="gold"
-			type="number"
-			min="0"
-			step="1"
-			bind:value={draftGold}
-			on:blur={saveGold}
+			type="text"
+			inputmode="decimal"
+			bind:value={draftGoldInput}
+			on:focus={() => (isGoldEditing = true)}
+			on:keydown={(e) => e.key === 'Enter' && goldInput?.blur()}
+			on:blur={() => {
+				isGoldEditing = false;
+				saveGold();
+			}}
 		/>
-		<p>Total purchasing power: {total.toLocaleString()} gp</p>
+		<p>Total available gp: {total.toLocaleString()} gp</p>
 	</section>
 
 	{#if queue.length > 0}
 		<section class="panel queue">
-			<h3>Recent item goals achieved</h3>
-			<p>Add any items you are willing to sell. Added items are counted toward purchasing power.</p>
+			<div class="step-head">
+				<span>Step 2</span>
+				<h3>Recent item goals achieved</h3>
+			</div>
+			<p>Add items you are willing to sell. Added items are counted toward your total available gp.</p>
 			<div class="queue-items">
 				{#each queue as item (item.goalId)}
 					<article>
 						<strong>{item.iconUrl ?? ''} {item.name}</strong>
-						<div>
+						<div class="actions">
 							<button on:click={() => addFromQueue(item)}>Add to Bank</button>
 							<button class="ghost" on:click={() => sessionStore.dismissReconciliationItem(item.goalId)}
 								>Dismiss</button
@@ -82,15 +107,17 @@
 	</section>
 
 	<section class="panel">
-		<h3>Liquid assets</h3>
+		<h3>Sellable items</h3>
 		{#if planner.bankItems.length === 0}
-			<p class="muted">No liquid assets added.</p>
+			<p class="muted">No sellable items added.</p>
 		{:else}
 			<div class="bank-items">
 				{#each planner.bankItems as item (item.itemId)}
 					<article>
-						<div>
+						<div class="item-head">
 							<strong>{item.iconUrl ?? ''} {item.name}</strong>
+						</div>
+						<div class="item-controls">
 							<p>Qty</p>
 							<input
 								type="number"
@@ -100,10 +127,10 @@
 								on:change={(e) =>
 									plannerStore.setBankItemQuantity(item.itemId, Number((e.target as HTMLInputElement).value))}
 							/>
-						</div>
-						<button class="ghost danger" on:click={() => plannerStore.removeBankItem(item.itemId)}>
+							<button class="ghost danger" on:click={() => plannerStore.removeBankItem(item.itemId)}>
 							Remove
 						</button>
+						</div>
 					</article>
 				{/each}
 			</div>
@@ -114,10 +141,11 @@
 <style>
 	.page {
 		display: grid;
-		gap: 0.9rem;
+		gap: 1rem;
 	}
 	header h2 {
 		margin: 0;
+		font-size: 1.42rem;
 	}
 	header p {
 		margin: 0.2rem 0 0;
@@ -125,33 +153,57 @@
 	}
 	.panel {
 		border: 1px solid var(--border);
-		background: var(--surface-2);
-		border-radius: 0.85rem;
-		padding: 0.8rem;
+		background: linear-gradient(185deg, var(--surface-2), color-mix(in oklab, var(--surface-2), #100e0c 10%));
+		border-radius: 0.42rem;
+		padding: 0.85rem;
 		display: grid;
 		gap: 0.55rem;
 	}
+	.step-head {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.52rem;
+	}
+	.step-head span {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		min-width: 2.5rem;
+		height: 1.25rem;
+		padding: 0 0.35rem;
+		border-radius: 0.3rem;
+		font-size: 0.66rem;
+		letter-spacing: 0.05em;
+		text-transform: uppercase;
+		border: 1px solid var(--border);
+		color: var(--text-2);
+	}
+	.step-head label {
+		font-weight: 620;
+	}
 	.gold input {
-		width: 14rem;
+		width: 16rem;
 		max-width: 100%;
 	}
 	h3 {
 		margin: 0;
+		font-size: 1rem;
 	}
 	input {
 		padding: 0.5rem 0.55rem;
 		border: 1px solid var(--border);
-		border-radius: 0.55rem;
-		background: #101722;
+		border-radius: 0.34rem;
+		background: color-mix(in oklab, var(--surface-1), #000 15%);
 		color: var(--text-1);
 	}
 	button {
 		border: 1px solid var(--border);
-		background: #1f2735;
+		background: color-mix(in oklab, var(--surface-1), #fff 3%);
 		color: var(--text-1);
 		padding: 0.45rem 0.65rem;
-		border-radius: 0.55rem;
+		border-radius: 0.34rem;
 		cursor: pointer;
+		font-family: var(--font-heading);
 	}
 	button.ghost {
 		background: transparent;
@@ -160,26 +212,46 @@
 		color: #f1a5a5;
 	}
 	.queue {
-		border-color: color-mix(in oklab, var(--goal-item), var(--border) 45%);
+		border-color: color-mix(in oklab, var(--goal-item), var(--border) 30%);
+		background:
+			linear-gradient(185deg, color-mix(in oklab, var(--surface-2), #3d3019 12%), var(--surface-2));
 	}
 	.queue-items {
 		display: grid;
 		gap: 0.45rem;
 	}
+	.queue-items article {
+		border-color: color-mix(in oklab, var(--goal-item), var(--border) 48%);
+	}
+	.actions {
+		display: inline-flex;
+		gap: 0.4rem;
+	}
 	.queue-items article,
 	.bank-items article {
 		display: flex;
-		justify-content: space-between;
-		align-items: center;
+		flex-direction: column;
+		align-items: stretch;
 		gap: 0.6rem;
 		border: 1px solid var(--border);
-		border-radius: 0.65rem;
-		padding: 0.55rem;
-		background: #121a24;
+		border-radius: 0.42rem;
+		padding: 0.7rem;
+		background: color-mix(in oklab, var(--surface-1), #fff 1%);
 	}
 	.bank-items {
 		display: grid;
-		gap: 0.55rem;
+		gap: 0.65rem;
+		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
+	}
+	.item-head {
+		text-align: center;
+		font-family: var(--font-heading);
+	}
+	.item-controls {
+		display: flex;
+		align-items: flex-end;
+		justify-content: space-between;
+		gap: 0.5rem;
 	}
 	.bank-items p {
 		margin: 0.3rem 0 0.1rem;
@@ -192,5 +264,14 @@
 	.muted {
 		margin: 0;
 		color: var(--text-2);
+	}
+	.actions {
+		display: inline-flex;
+		gap: 0.4rem;
+	}
+	@media (max-width: 640px) {
+		.item-controls {
+			width: 100%;
+		}
 	}
 </style>

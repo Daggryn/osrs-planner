@@ -13,6 +13,7 @@
 		topBankGains,
 		topWishlistDrops
 	} from '$lib/stores/selectors';
+	import { categoryIcons } from '$lib/constants/categoryIcons';
 	import type { Goal } from '$lib/domain/types';
 
 	const SPOTLIGHT_SESSION_KEY = 'osrs-planner:spotlight-seen';
@@ -103,7 +104,10 @@
 
 	<section class="goal-rows">
 		<div>
-			<h3>Items</h3>
+			<h3 class="row-heading">
+				<img src={categoryIcons.item} alt="" />
+				<span>Items</span>
+			</h3>
 			<div class="cards">
 				{#each itemRow as goal (goal.id)}
 					<GoalCard goal={goal} summaryOnly />
@@ -111,7 +115,10 @@
 			</div>
 		</div>
 		<div>
-			<h3>Quests</h3>
+			<h3 class="row-heading">
+				<img src={categoryIcons.quest} alt="" />
+				<span>Quests</span>
+			</h3>
 			<div class="cards">
 				{#each questRow as goal (goal.id)}
 					<GoalCard goal={goal} summaryOnly />
@@ -119,7 +126,10 @@
 			</div>
 		</div>
 		<div>
-			<h3>Skills</h3>
+			<h3 class="row-heading">
+				<img src={categoryIcons.skill} alt="" />
+				<span>Skills</span>
+			</h3>
 			<div class="cards">
 				{#each skillRow as goal (goal.id)}
 					<GoalCard goal={goal} summaryOnly />
@@ -132,25 +142,27 @@
 <style>
 	.page {
 		display: grid;
-		gap: 0.9rem;
+		gap: 1rem;
 	}
 	header h2 {
 		margin: 0;
-		font-size: 1.35rem;
+		font-size: 1.42rem;
+		letter-spacing: 0.04em;
 	}
 	header p {
-		margin: 0.2rem 0 0;
+		margin: 0.25rem 0 0;
 		color: var(--text-2);
 	}
 	.panel {
 		border: 1px solid var(--border);
-		background: var(--surface-2);
-		border-radius: 0.85rem;
-		padding: 0.8rem;
+		background: linear-gradient(185deg, var(--surface-2), color-mix(in oklab, var(--surface-2), #0d0b09 10%));
+		border-radius: 0.42rem;
+		padding: 0.85rem;
+		box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 	}
 	h3 {
 		margin: 0 0 0.45rem;
-		font-size: 0.95rem;
+		font-size: 0.98rem;
 	}
 	ul {
 		margin: 0;
@@ -164,12 +176,22 @@
 	}
 	.cards {
 		display: grid;
-		gap: 0.6rem;
+		gap: 0.7rem;
 		grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
 	}
 	.goal-rows {
 		display: grid;
-		gap: 0.9rem;
+		gap: 1rem;
+	}
+	.row-heading {
+		display: inline-flex;
+		align-items: center;
+		gap: 0.45rem;
+	}
+	.row-heading img {
+		width: 1.05rem;
+		height: 1.05rem;
+		image-rendering: pixelated;
 	}
 	.muted {
 		margin: 0;

@@ -64,9 +64,9 @@ export const plannerStore = {
 	},
 	addItemGoal(item: { itemId: number; name: string; iconUrl?: string; price?: number }) {
 		base.update((s) => {
-			if (s.itemGoals.some((g) => g.itemId === item.itemId)) return s;
+			if (s.itemGoals.some((g) => g.itemId === item.itemId && g.status === 'active')) return s;
 			const goal: ItemGoal = {
-				id: `item-${item.itemId}`,
+				id: `item-${item.itemId}-${Date.now()}`,
 				type: 'item',
 				itemId: item.itemId,
 				title: item.name,
@@ -161,4 +161,3 @@ export const plannerStore = {
 };
 
 export type { PlannerState };
-

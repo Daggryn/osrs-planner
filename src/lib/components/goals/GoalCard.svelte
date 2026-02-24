@@ -16,27 +16,23 @@
 		onUndo?: () => void;
 		onOpen?: () => void;
 	}>();
-
-	const color = $derived(
-		goal.type === 'item' ? ('item' as const) : goal.type === 'quest' ? ('quest' as const) : ('skill' as const)
-	);
 </script>
 
-<article class="card {goal.status === 'completed' ? 'done' : ''}" data-type={goal.type}>
+<article
+	class="card {goal.status === 'completed' ? 'done' : ''} {summaryOnly ? 'summary' : 'full'}"
+	data-type={goal.type}
+>
 	<button class="open" aria-label={`Open ${goal.title}`} onclick={onOpen}>
 		<div class="title-row">
 			<p class="name">{goal.iconUrl ?? ''} {goal.title}</p>
 			{#if goal.status === 'completed'}<span class="status">Completed</span>{/if}
 		</div>
-		<ProgressBar value={goal.progressPct} color={color} />
 	</button>
 
 	{#if !summaryOnly}
 		{#if goal.type === 'item'}
 			<div class="meta">
 				<PriceBadge price={goal.currentPrice ?? goal.lastKnownPrice} stale={Boolean(goal.priceStale)} />
-				<ProgressBar value={goal.goldProgressPct} color="item" label="Gold progress" />
-				<ProgressBar value={goal.powerProgressPct} color="item" label="Purchasing power" />
 			</div>
 		{:else if goal.subGoals?.length}
 			<ul>
@@ -54,48 +50,66 @@
 			{/if}
 		</div>
 	{/if}
+
+	<div class="progress-slot">
+		{#if goal.type === 'item'}
+			<ProgressBar value={goal.goldProgressPct} secondaryValue={goal.powerProgressPct} />
+		{:else}
+			<ProgressBar value={goal.progressPct} />
+		{/if}
+	</div>
 </article>
 
 <style>
 	.card {
 		background: color-mix(in oklab, var(--surface-1), #fff 2%);
-		border: 1px solid var(--border);
-		border-left: 4px solid var(--goal-item);
-		border-radius: 0.9rem;
-		padding: 0.8rem;
-		display: grid;
-		gap: 0.75rem;
+		border: 1px solid color-mix(in oklab, var(--goal-item), var(--border) 35%);
+		border-radius: 0.42rem;
+		padding: 0.85rem 0.85rem 0.35rem;
+		display: flex;
+		flex-direction: column;
+		gap: 0.85rem;
+	}
+	.card.full {
+		min-height: 228px;
+	}
+	.card.summary {
+		min-height: 176px;
 	}
 	.card[data-type='quest'] {
-		border-left-color: var(--goal-quest);
+		border-color: color-mix(in oklab, var(--goal-quest), var(--border) 35%);
 	}
 	.card[data-type='skill'] {
-		border-left-color: var(--goal-skill);
+		border-color: color-mix(in oklab, var(--goal-skill), var(--border) 35%);
 	}
 	.card.done {
 		box-shadow: 0 0 0 1px color-mix(in oklab, var(--goal-complete), transparent 70%);
 	}
 	.open {
 		all: unset;
-		display: grid;
-		gap: 0.55rem;
+		display: block;
 		cursor: pointer;
 	}
 	.title-row {
-		display: flex;
-		justify-content: space-between;
-		gap: 0.6rem;
-		align-items: center;
+		display: grid;
+		justify-items: center;
+		text-align: center;
+		position: relative;
 	}
 	.name {
 		margin: 0;
 		font-weight: 650;
-		font-size: 0.97rem;
+		font-size: 1.02rem;
+		font-family: var(--font-heading);
+		letter-spacing: 0.01em;
 	}
 	.status {
+		position: absolute;
+		top: 0;
+		right: 0;
 		font-size: 0.7rem;
 		padding: 0.18rem 0.45rem;
-		border-radius: 999px;
+		border-radius: 0.3rem;
 		background: color-mix(in oklab, var(--goal-complete), transparent 75%);
 		color: #b9f0cf;
 	}
@@ -118,12 +132,15 @@
 		display: flex;
 		justify-content: flex-end;
 	}
+	.progress-slot {
+		margin-top: auto;
+	}
 	button {
 		border: 1px solid var(--border);
-		background: #1f2735;
+		background: color-mix(in oklab, var(--surface-2), #fff 3%);
 		color: var(--text-1);
-		padding: 0.45rem 0.65rem;
-		border-radius: 0.55rem;
+		padding: 0.5rem 0.72rem;
+		border-radius: 0.34rem;
 		cursor: pointer;
 	}
 	button.ghost {

@@ -65,21 +65,22 @@
 
 	<div class="toolbar">
 		<TypeaheadItemSearch placeholder="Add item goal..." on:select={addFromSearch} />
-		<button on:click={refresh} disabled={$priceStore.isRefreshing}>
-			{$priceStore.isRefreshing ? 'Refreshing...' : 'Refresh prices'}
-		</button>
-		<label>
-			<input
-				type="checkbox"
-				checked={state.showCompleted}
-				on:change={(e) => plannerStore.setShowCompleted((e.target as HTMLInputElement).checked)}
-			/>
-			Show completed
-		</label>
 	</div>
 
-	<section>
-		<h3>Active goals</h3>
+	<div class="controls-row">
+		<button class="toolbar-btn" on:click={refresh} disabled={$priceStore.isRefreshing}>
+			{$priceStore.isRefreshing ? 'Refreshing...' : 'Refresh prices'}
+		</button>
+		<button class="toolbar-btn" on:click={() => plannerStore.setShowCompleted(!state.showCompleted)}>
+			{state.showCompleted ? 'Hide completed' : 'Show completed'}
+		</button>
+	</div>
+
+	<section class="goal-section">
+		<div class="section-head">
+			<h3>Active goals</h3>
+			<small>{grouped.active.length} tracked</small>
+		</div>
 		<div class="cards">
 			{#if grouped.active.length === 0}
 				<p class="muted">No active item goals yet.</p>
@@ -91,8 +92,11 @@
 	</section>
 
 	{#if state.showCompleted}
-		<section>
-			<h3>Completed goals</h3>
+		<section class="goal-section">
+			<div class="section-head">
+				<h3>Completed goals</h3>
+				<small>{grouped.completed.length} archived</small>
+			</div>
 			<div class="cards">
 				{#if grouped.completed.length === 0}
 					<p class="muted">No completed item goals yet.</p>
@@ -108,10 +112,12 @@
 <style>
 	.page {
 		display: grid;
-		gap: 0.9rem;
+		gap: 1rem;
 	}
 	header h2 {
 		margin: 0;
+		font-size: 1.42rem;
+		letter-spacing: 0.04em;
 	}
 	header p {
 		margin: 0.2rem 0 0;
@@ -119,48 +125,65 @@
 	}
 	.toolbar {
 		display: grid;
-		grid-template-columns: 1fr;
-		gap: 0.6rem;
+		gap: 0.5rem;
 		border: 1px solid var(--border);
-		background: var(--surface-2);
-		padding: 0.75rem;
-		border-radius: 0.8rem;
+		background: linear-gradient(190deg, var(--surface-2), color-mix(in oklab, var(--surface-2), #100e0b 11%));
+		padding: 0.82rem;
+		border-radius: 0.42rem;
+	}
+	.controls-row {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 0.5rem;
 	}
 	button {
 		border: 1px solid var(--border);
-		background: #1f2735;
+		background: color-mix(in oklab, var(--surface-1), #fff 3%);
 		color: var(--text-1);
-		padding: 0.55rem 0.7rem;
-		border-radius: 0.55rem;
+		padding: 0.55rem 0.8rem;
+		border-radius: 0.34rem;
 		cursor: pointer;
+		font-family: var(--font-heading);
+	}
+	.toolbar-btn:hover:not(:disabled) {
+		border-color: color-mix(in oklab, var(--goal-item), var(--border) 62%);
 	}
 	button:disabled {
 		opacity: 0.7;
 		cursor: wait;
 	}
-	label {
-		display: inline-flex;
-		gap: 0.4rem;
+	.goal-section {
+		display: grid;
+		gap: 0.55rem;
+		padding-top: 0.25rem;
+	}
+	.section-head {
+		display: flex;
+		justify-content: space-between;
 		align-items: center;
+		gap: 0.5rem;
+	}
+	.section-head small {
 		color: var(--text-2);
+		letter-spacing: 0.06em;
+		text-transform: uppercase;
+		font-size: 0.66rem;
 	}
 	h3 {
 		margin: 0 0 0.5rem;
+		font-size: 1rem;
 	}
 	.cards {
 		display: grid;
 		grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
-		gap: 0.65rem;
+		gap: 0.72rem;
 	}
 	.muted {
 		margin: 0;
 		color: var(--text-2);
+		padding: 0.45rem 0.2rem;
 	}
 	@media (min-width: 900px) {
-		.toolbar {
-			grid-template-columns: minmax(12rem, 1fr) auto auto;
-			align-items: center;
-		}
+		.controls-row { justify-content: flex-end; }
 	}
 </style>
-

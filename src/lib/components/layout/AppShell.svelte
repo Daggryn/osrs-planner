@@ -24,20 +24,38 @@
 		--goal-quest: #4f8de3;
 		--goal-skill: #41b672;
 		--goal-complete: #41b672;
-		--surface-1: #12161d;
-		--surface-2: #1a202b;
-		--text-1: #f4f6f8;
-		--text-2: #a3acb8;
-		--border: #293241;
+		--surface-0: #12100e;
+		--surface-1: #1b1916;
+		--surface-2: #25221d;
+		--surface-3: #322d26;
+		--text-1: #f2eee9;
+		--text-2: #b3a89b;
+		--border: #4a4034;
+		--focus: #e6c16f;
+		--font-heading: 'Cinzel', 'Georgia', serif;
+		--font-body: 'Source Sans 3', 'Verdana', sans-serif;
+		--shadow-lg: 0 16px 40px rgba(0, 0, 0, 0.32);
 	}
 	:global(body) {
-		font-family: 'Space Grotesk', 'IBM Plex Sans', 'Segoe UI', sans-serif;
+		font-family: var(--font-body);
 		margin: 0;
-		background:
-			radial-gradient(circle at 80% 10%, #1f2d3f 0%, transparent 35%),
-			radial-gradient(circle at 10% 20%, #1f202d 0%, transparent 30%),
-			#0b1017;
+		background: linear-gradient(180deg, color-mix(in oklab, var(--surface-0), #191512 6%), var(--surface-0));
 		color: var(--text-1);
+	}
+	:global(h1),
+	:global(h2),
+	:global(h3),
+	:global(h4),
+	:global(h5),
+	:global(h6) {
+		font-family: var(--font-heading);
+		font-weight: 600;
+		letter-spacing: 0.02em;
+	}
+	:global(*:focus-visible) {
+		outline: 2px solid var(--focus);
+		outline-offset: 2px;
+		border-radius: 0.18rem;
 	}
 	.shell {
 		display: flex;
@@ -46,6 +64,9 @@
 	main {
 		flex: 1;
 		padding: 1rem 1rem 4.75rem;
+		max-width: 1100px;
+		width: 100%;
+		margin: 0 auto;
 	}
 	.toast-stack {
 		position: fixed;
@@ -57,8 +78,7 @@
 	}
 	@media (min-width: 900px) {
 		main {
-			padding: 1.2rem 1.2rem 1.2rem;
+			padding: 1.3rem 1.4rem 1.4rem;
 		}
 	}
 </style>
-
