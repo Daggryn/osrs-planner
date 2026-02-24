@@ -86,13 +86,14 @@ export const priceStore = {
 					const id = Number(idText);
 					const previous = merged[id];
 					const current = price.current ?? previous?.current ?? previous?.lastKnown;
+					const stale = Boolean(price.stale);
 					merged[id] = {
 						current,
 						lastKnown: current ?? previous?.lastKnown,
-						stale: false,
+						stale,
 						updatedAt: nowIso(),
-						fetchFailedAt: undefined,
-						staleReason: undefined
+						fetchFailedAt: stale ? nowIso() : undefined,
+						staleReason: stale ? 'fetch_failed' : undefined
 					};
 				}
 				responsePayload = Object.fromEntries(

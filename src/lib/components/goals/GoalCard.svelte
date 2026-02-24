@@ -1,7 +1,8 @@
 <script lang="ts">
-	import type { Goal, ItemGoal, SkillGoal } from '$lib/domain/types';
+	import type { Goal, ItemGoal, SkillGoal, SubGoal } from '$lib/domain/types';
 	import ProgressBar from '$lib/components/goals/ProgressBar.svelte';
 	import PriceBadge from '$lib/components/items/PriceBadge.svelte';
+	import { categoryIcons } from '$lib/constants/categoryIcons';
 
 	let {
 		goal,
@@ -16,6 +17,17 @@
 		onUndo?: () => void;
 		onOpen?: () => void;
 	}>();
+
+	const visibleQuestSubGoals = $derived(
+		!homeMode && goal.type === 'quest'
+			? (goal.subGoals ?? []).filter((sub: SubGoal) => !sub.completed)
+			: []
+	);
+	const hiddenQuestSubGoalCount = $derived(
+		!homeMode && goal.type === 'quest'
+			? (goal.subGoals ?? []).filter((sub: SubGoal) => sub.completed).length
+			: 0
+	);
 </script>
 
 <article class="card {goal.status === 'completed' ? 'done' : ''}" data-type={goal.type}>
@@ -29,13 +41,15 @@
 
 		{#if homeMode && goal.type === 'skill'}
 			<div class="skill-center">
-				<img src={goal.iconUrl ?? '/icons/skill.svg'} alt="" />
+				<img src={goal.iconUrl ?? categoryIcons.skill} alt="" />
 				<strong>{goal.currentLevel} / {goal.targetLevel}</strong>
 			</div>
 		{/if}
 
 		{#if homeMode && goal.type === 'item'}
-			<PriceBadge price={goal.currentPrice ?? goal.lastKnownPrice} stale={Boolean(goal.priceStale)} />
+			<div class="meta home-price">
+				<PriceBadge price={goal.currentPrice ?? goal.lastKnownPrice} stale={Boolean(goal.priceStale)} />
+			</div>
 		{/if}
 	</button>
 
@@ -44,14 +58,22 @@
 			<div class="meta">
 				<PriceBadge price={goal.currentPrice ?? goal.lastKnownPrice} stale={Boolean(goal.priceStale)} />
 			</div>
+		{:else if goal.type === 'quest' && goal.subGoals?.length}
+			<ul>
+				{#each visibleQuestSubGoals as sub}
+					<li class:complete={sub.completed}>
+						<span>{sub.completed ? '✓' : '•'} {sub.label}</span>
+					</li>
+				{/each}
+				{#if hiddenQuestSubGoalCount > 0}
+					<li class="collapsed-note">{hiddenQuestSubGoalCount} completed requirements hidden</li>
+				{/if}
+			</ul>
 		{:else if goal.subGoals?.length}
 			<ul>
 				{#each goal.subGoals as sub}
 					<li class:complete={sub.completed}>
 						<span>{sub.completed ? '✓' : '•'} {sub.label}</span>
-						{#if sub.parentGoalTitle}
-							<small>for {sub.parentGoalTitle}</small>
-						{/if}
 					</li>
 				{/each}
 			</ul>
@@ -136,6 +158,9 @@
 		justify-items: center;
 		text-align: center;
 	}
+	.home-price {
+		margin-top: 0.2rem;
+	}
 	ul {
 		margin: 0;
 		padding: 0;
@@ -144,14 +169,14 @@
 		gap: 0.28rem;
 		color: var(--text-2);
 		font-size: 0.82rem;
-		justify-items: center;
-		text-align: center;
+		justify-items: stretch;
+		text-align: left;
 	}
 	li.complete {
 		color: #87d3ac;
 	}
-	li small {
-		font-size: 0.67rem;
+	.collapsed-note {
+		font-size: 0.72rem;
 		color: var(--text-3);
 	}
 	.footer-slot {

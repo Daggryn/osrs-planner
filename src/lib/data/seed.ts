@@ -1,4 +1,5 @@
 import type { QuestGoal, SkillGoal } from '$lib/domain/types';
+import { categoryIcons } from '$lib/constants/categoryIcons';
 
 const nowIso = () => new Date().toISOString();
 
@@ -65,7 +66,7 @@ export const SKILL_SEED: SkillGoal[] = [
 		progressPct: 0,
 		createdAt: nowIso(),
 		updatedAt: nowIso(),
-		iconUrl: '/icons/skill.svg'
+		iconUrl: categoryIcons.skill
 	},
 	{
 		id: 'skill-agility',
@@ -83,9 +84,8 @@ export const SKILL_SEED: SkillGoal[] = [
 		createdAt: nowIso(),
 		completedAt: new Date(Date.now() - 1000 * 60 * 60 * 16).toISOString(),
 		updatedAt: nowIso(),
-		iconUrl: '/icons/skill.svg'
+		iconUrl: categoryIcons.skill
 	}
 ];
 
 export { levelToXp };
-

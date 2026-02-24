@@ -23,7 +23,8 @@ const skills = [
 	'Cooking',
 	'Firemaking',
 	'Woodcutting',
-	'Farming'
+	'Farming',
+	'Sailing'
 ];
 
 export const GET: RequestHandler = async () => {

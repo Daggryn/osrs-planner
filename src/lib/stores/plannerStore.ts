@@ -2,8 +2,10 @@ import { browser } from '$app/environment';
 import { get, writable } from 'svelte/store';
 import type { BankItem, ItemGoal, QuestGoal, SkillGoal } from '$lib/domain/types';
 import { QUEST_SEED, SKILL_SEED, levelToXp } from '$lib/data/seed';
+import { categoryIcons } from '$lib/constants/categoryIcons';
 
 const STORAGE_KEY = 'osrs-planner:v2';
+const MAPPING_CACHE_KEY = 'osrs-planner:cache:mapping:v1';
 
 type PlannerState = {
 	schemaVersion: 2;
@@ -23,6 +25,31 @@ type PlannerState = {
 };
 
 const nowIso = () => new Date().toISOString();
+
+function iconToImageUrl(icon?: string) {
+	if (!icon) return undefined;
+	return `https://oldschool.runescape.wiki/images/${encodeURIComponent(icon)}`;
+}
+
+function loadCachedMappingImageLookup() {
+	const map = new Map<number, string>();
+	if (!browser) return map;
+	try {
+		const raw = window.localStorage.getItem(MAPPING_CACHE_KEY);
+		if (!raw) return map;
+		const parsed = JSON.parse(raw) as {
+			items?: Array<{ itemId?: number; imageUrl?: string; icon?: string }>;
+		};
+		for (const item of parsed.items ?? []) {
+			if (!item || typeof item.itemId !== 'number') continue;
+			const imageUrl = item.imageUrl ?? iconToImageUrl(item.icon);
+			if (imageUrl) map.set(item.itemId, imageUrl);
+		}
+		return map;
+	} catch {
+		return map;
+	}
+}
 
 const initialState: PlannerState = {
 	schemaVersion: 2,
@@ -74,7 +101,8 @@ function normalizeSkillGoal(raw: Partial<SkillGoal> & { id: string; title?: stri
 		createdAt: raw.createdAt ?? nowIso(),
 		updatedAt: raw.updatedAt ?? nowIso(),
 		completedAt: raw.completedAt,
-		iconUrl: raw.iconUrl ?? '/icons/skill.svg',
+		iconUrl:
+			!raw.iconUrl || raw.iconUrl === '/icons/skill.svg' ? categoryIcons.skill : raw.iconUrl,
 		subGoals: raw.subGoals
 	};
 }
@@ -150,6 +178,7 @@ function normalizeItemGoal(raw: Partial<ItemGoal> & { id: string; itemId: number
 function parseStoredState(raw: string | null): PlannerState {
 	if (!raw) return initialState;
 	try {
+		const mappingImageLookup = loadCachedMappingImageLookup();
 		const parsed = JSON.parse(raw) as Partial<PlannerState> & {
 			schemaVersion?: number;
 			skillGoals?: Array<Partial<SkillGoal> & { id: string }>;
@@ -161,7 +190,13 @@ function parseStoredState(raw: string | null): PlannerState {
 			return {
 				...initialState,
 				...parsed,
-				itemGoals: (parsed.itemGoals ?? []).map(normalizeItemGoal),
+				itemGoals: (parsed.itemGoals ?? []).map((goal) => {
+					const normalized = normalizeItemGoal(goal);
+					return {
+						...normalized,
+						imageUrl: normalized.imageUrl ?? mappingImageLookup.get(normalized.itemId)
+					};
+				}),
 				questGoals: (parsed.questGoals ?? QUEST_SEED).map(normalizeQuestGoal),
 				skillGoals: (parsed.skillGoals ?? SKILL_SEED).map(normalizeSkillGoal),
 				bankItems:
@@ -169,7 +204,7 @@ function parseStoredState(raw: string | null): PlannerState {
 						itemId: b.itemId,
 						name: b.name,
 						quantity: b.quantity,
-						imageUrl: b.imageUrl,
+						imageUrl: b.imageUrl ?? mappingImageLookup.get(b.itemId),
 						currentPrice: b.currentPrice,
 						lastKnownPrice: b.lastKnownPrice
 					})) ?? [],
@@ -183,7 +218,13 @@ function parseStoredState(raw: string | null): PlannerState {
 			gold: Number(parsed.gold ?? 0),
 			showCompleted: Boolean(parsed.showCompleted),
 			lastOpenedAt: parsed.lastOpenedAt,
-			itemGoals: (parsed.itemGoals ?? []).map(normalizeItemGoal),
+			itemGoals: (parsed.itemGoals ?? []).map((goal) => {
+				const normalized = normalizeItemGoal(goal);
+				return {
+					...normalized,
+					imageUrl: normalized.imageUrl ?? mappingImageLookup.get(normalized.itemId)
+				};
+			}),
 			questGoals: (parsed.questGoals ?? QUEST_SEED).map(normalizeQuestGoal),
 			skillGoals: (parsed.skillGoals ?? SKILL_SEED).map(normalizeSkillGoal),
 			bankItems:
@@ -191,7 +232,7 @@ function parseStoredState(raw: string | null): PlannerState {
 					itemId: b.itemId,
 					name: b.name,
 					quantity: b.quantity,
-					imageUrl: b.imageUrl,
+					imageUrl: b.imageUrl ?? mappingImageLookup.get(b.itemId),
 					currentPrice: b.currentPrice,
 					lastKnownPrice: b.lastKnownPrice
 				})) ?? [],
@@ -210,6 +251,42 @@ if (browser) {
 	base.subscribe((state) => {
 		window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 	});
+}
+
+async function hydrateMissingItemImages() {
+	if (!browser) return;
+	const state = get(base);
+	const hasMissingItemGoalImages = state.itemGoals.some((goal) => !goal.imageUrl);
+	const hasMissingBankItemImages = state.bankItems.some((item) => !item.imageUrl);
+	if (!hasMissingItemGoalImages && !hasMissingBankItemImages) return;
+
+	try {
+		const res = await fetch('/api/osrs/mapping');
+		if (!res.ok) return;
+		const data = (await res.json()) as Array<{ id: number; icon?: string }>;
+		const lookup = new Map<number, string>();
+		for (const row of data) {
+			const imageUrl = iconToImageUrl(row.icon);
+			if (imageUrl) lookup.set(row.id, imageUrl);
+		}
+		base.update((s) => ({
+			...s,
+			itemGoals: s.itemGoals.map((goal) => ({
+				...goal,
+				imageUrl: goal.imageUrl ?? lookup.get(goal.itemId)
+			})),
+			bankItems: s.bankItems.map((item) => ({
+				...item,
+				imageUrl: item.imageUrl ?? lookup.get(item.itemId)
+			}))
+		}));
+	} catch {
+		// Keep current state if mapping fetch fails.
+	}
+}
+
+if (browser) {
+	void hydrateMissingItemImages();
 }
 
 export const plannerStore = {
@@ -308,7 +385,7 @@ export const plannerStore = {
 				progressPct: 0,
 				createdAt: nowIso(),
 				updatedAt: nowIso(),
-				iconUrl: '/icons/skill.svg',
+				iconUrl: categoryIcons.skill,
 				subGoals: []
 			};
 			return { ...s, skillGoals: [...s.skillGoals, skillGoal] };
@@ -413,7 +490,7 @@ export const plannerStore = {
 		const metadataRows = await Promise.all(
 			seedGoals.map(async (goal) => {
 				try {
-					const res = await fetch(`/api/osrs/quest-meta?title=${encodeURIComponent(goal.title)}`);
+					const res = await fetch(`/api/osrs/quest-meta?title=${encodeURIComponent(goal.title)}&cascade=1`);
 					if (!res.ok) return { goalId: goal.id, questIds: goal.requirements.questIds, skillReqs: goal.requirements.skillReqs };
 					const data = (await res.json()) as {
 						questIds?: string[];

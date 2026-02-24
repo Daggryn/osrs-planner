@@ -16,7 +16,7 @@ const mappingTtlMs = 1000 * 60 * 30;
 
 function iconToImageUrl(icon?: string) {
 	if (!icon) return '/icons/item-placeholder.svg';
-	return `https://oldschool.runescape.wiki/images/Special:FilePath/${encodeURIComponent(icon)}`;
+	return `https://oldschool.runescape.wiki/images/${encodeURIComponent(icon)}`;
 }
 
 function readMappingCache(): MappingCachePayload | null {
@@ -103,12 +103,13 @@ export async function fetchLatestPrices(itemIds?: number[]) {
 	if (!res.ok) throw new Error('latest prices fetch failed');
 	const data = (await res.json()) as {
 		data?: Record<string, { high?: number; low?: number }>;
+		stale?: boolean;
 	};
 	const out: Record<number, { current?: number; stale?: boolean }> = {};
 	for (const [idText, row] of Object.entries(data.data ?? {})) {
 		const id = Number(idText);
 		const current = row.high ?? row.low;
-		out[id] = { current, stale: false };
+		out[id] = { current, stale: Boolean(data.stale) };
 	}
 	return out;
 }

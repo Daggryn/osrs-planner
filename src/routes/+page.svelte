@@ -90,7 +90,7 @@
 		questReqs: string[];
 		skillReqs: Array<{ skill: string; level: number }>;
 	}) {
-		const meta = await fetchQuestMetadata(payload.title);
+		const meta = await fetchQuestMetadata(payload.title, { cascade: true });
 		const mergedQuestReqs = [...new Set([...payload.questReqs, ...meta.questIds])];
 		const mergedSkillReqsMap = new Map<string, { skill: string; level: number }>();
 		for (const req of [...payload.skillReqs, ...meta.skillReqs]) {
@@ -175,7 +175,7 @@
 		<div>
 			<div class="heading-line">
 				<h3>Items</h3>
-				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Special:FilePath/Coins_10000.png" alt="" />{itemTracker}</span>
+				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Coins_10000.png" alt="" />{itemTracker}</span>
 			</div>
 			<div class="cards">
 				{#each itemRow as goal (goal.id)}
@@ -186,8 +186,8 @@
 		<div>
 			<div class="heading-line">
 				<h3>Quests</h3>
-				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Special:FilePath/Quest_tab.png" alt="" />{questTracker.questsDone}/{questTracker.questsTotal}</span>
-				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Special:FilePath/Stats_tab.png" alt="" />{questTracker.skillsDone}/{questTracker.skillsTotal}</span>
+				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Quests.png" alt="" />{questTracker.questsDone}/{questTracker.questsTotal}</span>
+				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Skills_icon.png" alt="" />{questTracker.skillsDone}/{questTracker.skillsTotal}</span>
 			</div>
 			<div class="cards">
 				{#each questRow as goal (goal.id)}
@@ -198,7 +198,7 @@
 		<div>
 			<div class="heading-line">
 				<h3>Skills</h3>
-				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Special:FilePath/Stats_tab.png" alt="" />{skillTracker.gained}/{skillTracker.needed}</span>
+				<span class="tracker"><img src="https://oldschool.runescape.wiki/images/Skills_icon.png" alt="" />{skillTracker.gained}/{skillTracker.needed}</span>
 			</div>
 			<div class="cards">
 				{#each skillRow as goal (goal.id)}

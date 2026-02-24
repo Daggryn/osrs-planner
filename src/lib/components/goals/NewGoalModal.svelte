@@ -64,7 +64,7 @@
 		questMetaTimer = setTimeout(async () => {
 			loadingQuestMeta = true;
 			try {
-				const res = await fetch(`/api/osrs/quest-meta?title=${encodeURIComponent(nextTitle.trim())}`);
+				const res = await fetch(`/api/osrs/quest-meta?title=${encodeURIComponent(nextTitle.trim())}&cascade=1`);
 				if (res.ok) {
 					const data = (await res.json()) as {
 						questIds?: string[];
