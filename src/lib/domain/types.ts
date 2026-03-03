@@ -36,6 +36,11 @@ export type ItemGoal = Goal & {
 export type QuestGoal = Goal & {
 	type: 'quest';
 	requirements: {
+		directQuestIds?: string[];
+		cascadedQuestIds?: string[];
+		directSkillReqs?: Array<{ skill: string; level: number }>;
+		cascadedSkillReqs?: Array<{ skill: string; level: number }>;
+		mergedSkillReqs?: Array<{ skill: string; level: number }>;
 		questIds: string[];
 		skillReqs: Array<{ skill: string; level: number }>;
 	};

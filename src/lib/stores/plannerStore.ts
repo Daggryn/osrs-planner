@@ -1,8 +1,9 @@
 import { browser } from '$app/environment';
 import { get, writable } from 'svelte/store';
 import type { BankItem, ItemGoal, QuestGoal, SkillGoal } from '$lib/domain/types';
-import { QUEST_SEED, SKILL_SEED, levelToXp } from '$lib/data/seed';
+import { QUEST_SEED, SKILL_SEED, levelToXp, makeFremennikExilesTestGoal } from '$lib/data/seed';
 import { categoryIcons } from '$lib/constants/categoryIcons';
+import { mergeSkillReqsMax } from '$lib/services/questRequirements';
 
 const STORAGE_KEY = 'osrs-planner:v2';
 const MAPPING_CACHE_KEY = 'osrs-planner:cache:mapping:v1';
@@ -21,6 +22,7 @@ type PlannerState = {
 	};
 	meta: {
 		seedQuestAutocorrectedAt?: string;
+		questSeedMigrationV1At?: string;
 	};
 };
 
@@ -74,6 +76,28 @@ function dedupeSkillReqs(reqs: Array<{ skill: string; level: number }>) {
 	return [...map.values()];
 }
 
+export function isFremennikSeedQuestGoal(goal: QuestGoal) {
+	return (
+		goal.id === 'quest-fremennik-exiles-test' &&
+		goal.title === 'The Fremennik Exiles' &&
+		Array.isArray(goal.requirements.directQuestIds) &&
+		Array.isArray(goal.requirements.cascadedQuestIds) &&
+		Array.isArray(goal.requirements.mergedSkillReqs)
+	);
+}
+
+export function enforceQuestSeedMigration(state: PlannerState): PlannerState {
+	const migratedAt = state.meta.questSeedMigrationV1At;
+	if (migratedAt && state.questGoals.length === 1 && isFremennikSeedQuestGoal(state.questGoals[0])) {
+		return state;
+	}
+	return {
+		...state,
+		questGoals: [normalizeQuestGoal(makeFremennikExilesTestGoal())],
+		meta: { ...state.meta, questSeedMigrationV1At: nowIso() }
+	};
+}
+
 function normalizeSkillGoal(raw: Partial<SkillGoal> & { id: string; title?: string; skill?: string }): SkillGoal {
 	const skillName = raw.skill ?? raw.title ?? 'Skill';
 	const startLevel = Math.max(1, raw.startLevel ?? (raw as { levelCurrent?: number }).levelCurrent ?? 1);
@@ -108,9 +132,32 @@ function normalizeSkillGoal(raw: Partial<SkillGoal> & { id: string; title?: stri
 }
 
 function normalizeQuestGoal(raw: Partial<QuestGoal> & { id: string; title: string }): QuestGoal {
+	const directQuestIds = dedupeQuestReqs(raw.requirements?.directQuestIds ?? []);
+	const cascadedQuestIds = dedupeQuestReqs(
+		(raw.requirements?.cascadedQuestIds ?? []).filter((q) => !directQuestIds.includes(q))
+	);
+	const questIds = dedupeQuestReqs([
+		...(raw.requirements?.questIds ?? []),
+		...directQuestIds,
+		...cascadedQuestIds
+	]);
+	const directSkillReqs = mergeSkillReqsMax(raw.requirements?.directSkillReqs ?? []);
+	const cascadedSkillReqs = mergeSkillReqsMax(raw.requirements?.cascadedSkillReqs ?? []);
+	const mergedSkillReqs = mergeSkillReqsMax([
+		...(raw.requirements?.mergedSkillReqs ?? []),
+		...(raw.requirements?.skillReqs ?? []),
+		...directSkillReqs,
+		...cascadedSkillReqs
+	]);
+
 	const requirements = {
-		questIds: dedupeQuestReqs(raw.requirements?.questIds ?? []),
-		skillReqs: dedupeSkillReqs(raw.requirements?.skillReqs ?? [])
+		directQuestIds,
+		cascadedQuestIds,
+		directSkillReqs,
+		cascadedSkillReqs,
+		mergedSkillReqs,
+		questIds,
+		skillReqs: mergedSkillReqs
 	};
 	const completedQuestReqIds = (raw.completedQuestReqIds ?? []).filter((q) => requirements.questIds.includes(q));
 	const completedSkillReqs = (raw.completedSkillReqs ?? []).filter((req) =>
@@ -187,7 +234,7 @@ function parseStoredState(raw: string | null): PlannerState {
 		};
 
 		if (parsed.schemaVersion === 2) {
-			return {
+			const normalized: PlannerState = {
 				...initialState,
 				...parsed,
 				itemGoals: (parsed.itemGoals ?? []).map((goal) => {
@@ -211,9 +258,10 @@ function parseStoredState(raw: string | null): PlannerState {
 				ui: { navCollapsed: parsed.ui?.navCollapsed ?? false },
 				meta: parsed.meta ?? {}
 			};
+			return enforceQuestSeedMigration(normalized);
 		}
 
-		return {
+		const normalizedLegacy: PlannerState = {
 			...initialState,
 			gold: Number(parsed.gold ?? 0),
 			showCompleted: Boolean(parsed.showCompleted),
@@ -235,11 +283,12 @@ function parseStoredState(raw: string | null): PlannerState {
 					imageUrl: b.imageUrl ?? mappingImageLookup.get(b.itemId),
 					currentPrice: b.currentPrice,
 					lastKnownPrice: b.lastKnownPrice
-				})) ?? [],
+			})) ?? [],
 			meta: {}
 		};
+		return enforceQuestSeedMigration(normalizedLegacy);
 	} catch {
-		return initialState;
+		return enforceQuestSeedMigration(initialState);
 	}
 }
 
@@ -323,9 +372,16 @@ export const plannerStore = {
 		title: string;
 		requirements: { questIds: string[]; skillReqs: Array<{ skill: string; level: number }> };
 	}) {
+		const directQuestIds = dedupeQuestReqs(goal.requirements.questIds);
+		const mergedSkillReqs = mergeSkillReqsMax(goal.requirements.skillReqs);
 		const requirements = {
-			questIds: dedupeQuestReqs(goal.requirements.questIds),
-			skillReqs: dedupeSkillReqs(goal.requirements.skillReqs)
+			directQuestIds,
+			cascadedQuestIds: [] as string[],
+			directSkillReqs: mergedSkillReqs,
+			cascadedSkillReqs: [] as Array<{ skill: string; level: number }>,
+			mergedSkillReqs,
+			questIds: directQuestIds,
+			skillReqs: mergedSkillReqs
 		};
 		const subGoals = [
 			...requirements.questIds.map((quest) => ({

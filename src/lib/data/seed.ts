@@ -1,5 +1,10 @@
 import type { QuestGoal, SkillGoal } from '$lib/domain/types';
 import { categoryIcons } from '$lib/constants/categoryIcons';
+import fremennikFixture from '$lib/data/fixtures/the-fremennik-exiles.requirements.json';
+import {
+	buildFremennikRequirements,
+	type QuestRequirementsFixture
+} from '$lib/services/questRequirements';
 
 const nowIso = () => new Date().toISOString();
 
@@ -11,44 +16,33 @@ function levelToXp(level: number) {
 	return Math.floor(points / 4);
 }
 
-export const QUEST_SEED: QuestGoal[] = [
-	{
-		id: 'quest-ds2',
+const fremennikRequirements = buildFremennikRequirements(fremennikFixture as QuestRequirementsFixture);
+
+export function makeFremennikExilesTestGoal(): QuestGoal {
+	return {
+		id: 'quest-fremennik-exiles-test',
 		type: 'quest',
-		title: 'Dragon Slayer II',
+		title: 'The Fremennik Exiles',
 		status: 'active',
-		progressPct: 50,
+		progressPct: 0,
 		createdAt: nowIso(),
 		updatedAt: nowIso(),
 		requirements: {
-			questIds: ['Dream Mentor', 'Monkey Madness II'],
-			skillReqs: [
-				{ skill: 'Agility', level: 70 },
-				{ skill: 'Smithing', level: 70 }
-			]
+			directQuestIds: fremennikRequirements.directQuestIds,
+			cascadedQuestIds: fremennikRequirements.cascadedQuestIds,
+			directSkillReqs: fremennikRequirements.directSkillReqs,
+			cascadedSkillReqs: fremennikRequirements.cascadedSkillReqs,
+			mergedSkillReqs: fremennikRequirements.mergedSkillReqs,
+			questIds: fremennikRequirements.questIds,
+			skillReqs: fremennikRequirements.mergedSkillReqs
 		},
-		completedQuestReqIds: ['Dream Mentor'],
-		completedSkillReqs: [{ skill: 'Agility', level: 70 }],
+		completedQuestReqIds: [],
+		completedSkillReqs: [],
 		subGoals: []
-	},
-	{
-		id: 'quest-rfd',
-		type: 'quest',
-		title: 'Recipe for Disaster',
-		status: 'completed',
-		progressPct: 100,
-		createdAt: nowIso(),
-		completedAt: new Date(Date.now() - 1000 * 60 * 60 * 10).toISOString(),
-		updatedAt: nowIso(),
-		requirements: {
-			questIds: ['Desert Treasure'],
-			skillReqs: [{ skill: 'Cooking', level: 70 }]
-		},
-		completedQuestReqIds: ['Desert Treasure'],
-		completedSkillReqs: [{ skill: 'Cooking', level: 70 }],
-		subGoals: []
-	}
-];
+	};
+}
+
+export const QUEST_SEED: QuestGoal[] = [makeFremennikExilesTestGoal()];
 
 export const SKILL_SEED: SkillGoal[] = [
 	{

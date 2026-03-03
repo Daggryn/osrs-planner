@@ -1,5 +1,5 @@
 <script lang="ts">
-	import type { Goal, ItemGoal, SkillGoal, SubGoal } from '$lib/domain/types';
+	import type { Goal, ItemGoal, SkillGoal } from '$lib/domain/types';
 	import ProgressBar from '$lib/components/goals/ProgressBar.svelte';
 	import PriceBadge from '$lib/components/items/PriceBadge.svelte';
 	import { categoryIcons } from '$lib/constants/categoryIcons';
@@ -18,15 +18,22 @@
 		onOpen?: () => void;
 	}>();
 
-	const visibleQuestSubGoals = $derived(
-		!homeMode && goal.type === 'quest'
-			? (goal.subGoals ?? []).filter((sub: SubGoal) => !sub.completed)
+	const directQuestReqs = $derived(
+		goal.type === 'quest'
+			? (goal.requirements.directQuestIds ?? goal.requirements.questIds).filter(Boolean)
 			: []
 	);
-	const hiddenQuestSubGoalCount = $derived(
-		!homeMode && goal.type === 'quest'
-			? (goal.subGoals ?? []).filter((sub: SubGoal) => sub.completed).length
-			: 0
+	const cascadedQuestReqs = $derived(
+		goal.type === 'quest'
+			? (goal.requirements.cascadedQuestIds ?? []).filter(
+					(req: string) => req && !(goal.requirements.directQuestIds ?? []).includes(req)
+				)
+			: []
+	);
+	const mergedSkillReqs = $derived(
+		goal.type === 'quest'
+			? (goal.requirements.mergedSkillReqs ?? goal.requirements.skillReqs).filter(Boolean)
+			: []
 	);
 </script>
 
@@ -58,17 +65,45 @@
 			<div class="meta">
 				<PriceBadge price={goal.currentPrice ?? goal.lastKnownPrice} stale={Boolean(goal.priceStale)} />
 			</div>
-		{:else if goal.type === 'quest' && goal.subGoals?.length}
-			<ul>
-				{#each visibleQuestSubGoals as sub}
-					<li class:complete={sub.completed}>
-						<span>{sub.completed ? '✓' : '•'} {sub.label}</span>
-					</li>
-				{/each}
-				{#if hiddenQuestSubGoalCount > 0}
-					<li class="collapsed-note">{hiddenQuestSubGoalCount} completed requirements hidden</li>
-				{/if}
-			</ul>
+		{:else if goal.type === 'quest'}
+			<div class="quest-reqs">
+				<div>
+					<p class="section-title">Quest Requirements (Direct)</p>
+					<ul>
+						{#if directQuestReqs.length === 0}
+							<li class="empty">None</li>
+						{:else}
+							{#each directQuestReqs as req}
+								<li>• {req}</li>
+							{/each}
+						{/if}
+					</ul>
+				</div>
+				<div>
+					<p class="section-title">Quest Requirements (From Prereqs)</p>
+					<ul>
+						{#if cascadedQuestReqs.length === 0}
+							<li class="empty">None</li>
+						{:else}
+							{#each cascadedQuestReqs as req}
+								<li>• {req}</li>
+							{/each}
+						{/if}
+					</ul>
+				</div>
+				<div>
+					<p class="section-title">Skill Requirements (Merged Max)</p>
+					<ul>
+						{#if mergedSkillReqs.length === 0}
+							<li class="empty">None</li>
+						{:else}
+							{#each mergedSkillReqs as req}
+								<li>• {req.level} {req.skill}</li>
+							{/each}
+						{/if}
+					</ul>
+				</div>
+			</div>
 		{:else if goal.subGoals?.length}
 			<ul>
 				{#each goal.subGoals as sub}
@@ -172,12 +207,22 @@
 		justify-items: stretch;
 		text-align: left;
 	}
+	.quest-reqs {
+		display: grid;
+		gap: 0.45rem;
+		text-align: left;
+	}
+	.section-title {
+		margin: 0 0 0.2rem;
+		font-size: 0.74rem;
+		font-weight: 700;
+		color: var(--text-1);
+	}
+	.empty {
+		color: var(--text-3);
+	}
 	li.complete {
 		color: #87d3ac;
-	}
-	.collapsed-note {
-		font-size: 0.72rem;
-		color: var(--text-3);
 	}
 	.footer-slot {
 		margin-top: auto;

@@ -1,0 +1,52 @@
+{
+	"title": "The Fremennik Exiles",
+	"capturedAt": "2026-03-03T00:00:00.000Z",
+	"source": "one-time-manual-snapshot",
+	"directQuestReqs": ["The Fremennik Isles", "Lunar Diplomacy", "Mountain Daughter", "Heroes' Quest"],
+	"cascadedQuestReqs": [
+		"The Fremennik Trials",
+		"Lost City",
+		"Rune Mysteries",
+		"Shilo Village",
+		"Jungle Potion",
+		"Shield of Arrav",
+		"Dragon Slayer I",
+		"Merlin's Crystal"
+	],
+	"directSkillReqs": [
+		{ "skill": "Crafting", "level": 65 },
+		{ "skill": "Slayer", "level": 60 },
+		{ "skill": "Smithing", "level": 60 },
+		{ "skill": "Fishing", "level": 60 },
+		{ "skill": "Runecraft", "level": 55 }
+	],
+	"cascadedSkillReqs": [
+		{ "skill": "Agility", "level": 32 },
+		{ "skill": "Construction", "level": 20 },
+		{ "skill": "Crafting", "level": 61 },
+		{ "skill": "Cooking", "level": 53 },
+		{ "skill": "Defence", "level": 40 },
+		{ "skill": "Firemaking", "level": 49 },
+		{ "skill": "Fishing", "level": 53 },
+		{ "skill": "Herblore", "level": 25 },
+		{ "skill": "Magic", "level": 65 },
+		{ "skill": "Mining", "level": 60 },
+		{ "skill": "Woodcutting", "level": 55 }
+	],
+	"mergedSkillReqsMax": [
+		{ "skill": "Agility", "level": 32 },
+		{ "skill": "Construction", "level": 20 },
+		{ "skill": "Cooking", "level": 53 },
+		{ "skill": "Crafting", "level": 65 },
+		{ "skill": "Defence", "level": 40 },
+		{ "skill": "Firemaking", "level": 49 },
+		{ "skill": "Fishing", "level": 60 },
+		{ "skill": "Herblore", "level": 25 },
+		{ "skill": "Magic", "level": 65 },
+		{ "skill": "Mining", "level": 60 },
+		{ "skill": "Runecraft", "level": 55 },
+		{ "skill": "Slayer", "level": 60 },
+		{ "skill": "Smithing", "level": 60 },
+		{ "skill": "Woodcutting", "level": 55 }
+	]
+}
