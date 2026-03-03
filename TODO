@@ -1,4 +1,3 @@
-price is left aligned - want center
 item images arent there
 quest requirements that auto populate from quests are good, but need to cascade, so X needs Y, but Y needs Z,A,B etc. these get collapsed on the main card when completed.
 skill requirements for quests are not working
