@@ -48,5 +48,119 @@
 		{ "skill": "Slayer", "level": 60 },
 		{ "skill": "Smithing", "level": 60 },
 		{ "skill": "Woodcutting", "level": 55 }
+	],
+	"topLevelQuestDeps": [
+		{
+			"quest": "The Fremennik Isles",
+			"directSkillReqs": [
+				{ "skill": "Crafting", "level": 40 },
+				{ "skill": "Construction", "level": 20 },
+				{ "skill": "Agility", "level": 40 }
+			],
+			"directQuestReqs": ["The Fremennik Trials"],
+			"children": [
+				{
+					"quest": "The Fremennik Trials",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				}
+			]
+		},
+		{
+			"quest": "Lunar Diplomacy",
+			"directSkillReqs": [
+				{ "skill": "Crafting", "level": 61 },
+				{ "skill": "Defence", "level": 40 },
+				{ "skill": "Firemaking", "level": 49 },
+				{ "skill": "Magic", "level": 65 },
+				{ "skill": "Mining", "level": 60 },
+				{ "skill": "Woodcutting", "level": 55 }
+			],
+			"directQuestReqs": ["The Fremennik Trials", "Lost City", "Rune Mysteries", "Shilo Village"],
+			"children": [
+				{
+					"quest": "The Fremennik Trials",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Lost City",
+					"directSkillReqs": [
+						{ "skill": "Crafting", "level": 31 },
+						{ "skill": "Woodcutting", "level": 36 }
+					],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Rune Mysteries",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Shilo Village",
+					"directSkillReqs": [],
+					"directQuestReqs": ["Jungle Potion"],
+					"children": [
+						{
+							"quest": "Jungle Potion",
+							"directSkillReqs": [
+								{ "skill": "Herblore", "level": 3 }
+							],
+							"directQuestReqs": [],
+							"children": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"quest": "Mountain Daughter",
+			"directSkillReqs": [],
+			"directQuestReqs": [],
+			"children": []
+		},
+		{
+			"quest": "Heroes' Quest",
+			"directSkillReqs": [
+				{ "skill": "Cooking", "level": 53 },
+				{ "skill": "Fishing", "level": 53 },
+				{ "skill": "Herblore", "level": 25 },
+				{ "skill": "Mining", "level": 50 }
+			],
+			"directQuestReqs": ["Shield of Arrav", "Dragon Slayer I", "Lost City", "Merlin's Crystal"],
+			"children": [
+				{
+					"quest": "Shield of Arrav",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Dragon Slayer I",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Lost City",
+					"directSkillReqs": [
+						{ "skill": "Crafting", "level": 31 },
+						{ "skill": "Woodcutting", "level": 36 }
+					],
+					"directQuestReqs": [],
+					"children": []
+				},
+				{
+					"quest": "Merlin's Crystal",
+					"directSkillReqs": [],
+					"directQuestReqs": [],
+					"children": []
+				}
+			]
+		}
 	]
 }

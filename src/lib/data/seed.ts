@@ -33,6 +33,7 @@ export function makeFremennikExilesTestGoal(): QuestGoal {
 			directSkillReqs: fremennikRequirements.directSkillReqs,
 			cascadedSkillReqs: fremennikRequirements.cascadedSkillReqs,
 			mergedSkillReqs: fremennikRequirements.mergedSkillReqs,
+			topLevelQuestDeps: fremennikRequirements.topLevelQuestDeps,
 			questIds: fremennikRequirements.questIds,
 			skillReqs: fremennikRequirements.mergedSkillReqs
 		},

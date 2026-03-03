@@ -4,6 +4,7 @@ import type { BankItem, ItemGoal, QuestGoal, SkillGoal } from '$lib/domain/types
 import { QUEST_SEED, SKILL_SEED, levelToXp, makeFremennikExilesTestGoal } from '$lib/data/seed';
 import { categoryIcons } from '$lib/constants/categoryIcons';
 import { mergeSkillReqsMax } from '$lib/services/questRequirements';
+import type { QuestDependencyNode } from '$lib/domain/types';
 
 const STORAGE_KEY = 'osrs-planner:v2';
 const MAPPING_CACHE_KEY = 'osrs-planner:cache:mapping:v1';
@@ -82,7 +83,9 @@ export function isFremennikSeedQuestGoal(goal: QuestGoal) {
 		goal.title === 'The Fremennik Exiles' &&
 		Array.isArray(goal.requirements.directQuestIds) &&
 		Array.isArray(goal.requirements.cascadedQuestIds) &&
-		Array.isArray(goal.requirements.mergedSkillReqs)
+		Array.isArray(goal.requirements.mergedSkillReqs) &&
+		Array.isArray(goal.requirements.topLevelQuestDeps) &&
+		goal.requirements.topLevelQuestDeps.length > 0
 	);
 }
 
@@ -156,6 +159,7 @@ function normalizeQuestGoal(raw: Partial<QuestGoal> & { id: string; title: strin
 		directSkillReqs,
 		cascadedSkillReqs,
 		mergedSkillReqs,
+		topLevelQuestDeps: (raw.requirements?.topLevelQuestDeps ?? []) as QuestDependencyNode[],
 		questIds,
 		skillReqs: mergedSkillReqs
 	};
@@ -380,6 +384,7 @@ export const plannerStore = {
 			directSkillReqs: mergedSkillReqs,
 			cascadedSkillReqs: [] as Array<{ skill: string; level: number }>,
 			mergedSkillReqs,
+			topLevelQuestDeps: [] as QuestDependencyNode[],
 			questIds: directQuestIds,
 			skillReqs: mergedSkillReqs
 		};

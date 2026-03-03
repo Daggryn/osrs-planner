@@ -21,21 +21,55 @@ function mergeSkillReqsMax(skillReqs) {
 	return [...maxBySkill.values()].sort((a, b) => a.skill.localeCompare(b.skill));
 }
 
-async function fetchMeta(cascade) {
-	const params = new URLSearchParams({ title });
+async function fetchMeta(questTitle, cascade = false) {
+	const params = new URLSearchParams({ title: questTitle });
 	if (cascade) params.set('cascade', '1');
 	const res = await fetch(`${baseUrl}/api/osrs/quest-meta?${params.toString()}`);
 	if (!res.ok) throw new Error(`Failed to fetch ${res.url}: ${res.status}`);
 	return res.json();
 }
 
+async function buildQuestTree(questTitle, path = new Set()) {
+	const normalized = questTitle.trim();
+	if (!normalized || path.has(normalized)) {
+		return {
+			quest: normalized,
+			directSkillReqs: [],
+			directQuestReqs: [],
+			children: []
+		};
+	}
+
+	const meta = await fetchMeta(normalized, false);
+	const directQuestReqs = dedupe(meta.questIds ?? []);
+	const directSkillReqs = mergeSkillReqsMax(meta.skillReqs ?? []);
+	const nextPath = new Set(path);
+	nextPath.add(normalized);
+	const children = [];
+	for (const reqQuest of directQuestReqs) {
+		children.push(await buildQuestTree(reqQuest, nextPath));
+	}
+
+	return {
+		quest: normalized,
+		directSkillReqs,
+		directQuestReqs,
+		children
+	};
+}
+
 async function main() {
-	const [direct, cascaded] = await Promise.all([fetchMeta(false), fetchMeta(true)]);
+	const [direct, cascaded] = await Promise.all([fetchMeta(title, false), fetchMeta(title, true)]);
 	const directQuestReqs = dedupe(direct.questIds ?? []);
 	const cascadedQuestReqs = dedupe((cascaded.questIds ?? []).filter((quest) => !directQuestReqs.includes(quest)));
 	const directSkillReqs = mergeSkillReqsMax(direct.skillReqs ?? []);
 	const cascadedSkillReqs = mergeSkillReqsMax(cascaded.skillReqs ?? []);
 	const mergedSkillReqsMax = mergeSkillReqsMax([...directSkillReqs, ...cascadedSkillReqs]);
+
+	const topLevelQuestDeps = [];
+	for (const reqQuest of directQuestReqs) {
+		topLevelQuestDeps.push(await buildQuestTree(reqQuest, new Set([title])));
+	}
 
 	const snapshot = {
 		title,
@@ -45,7 +79,8 @@ async function main() {
 		cascadedQuestReqs,
 		directSkillReqs,
 		cascadedSkillReqs,
-		mergedSkillReqsMax
+		mergedSkillReqsMax,
+		topLevelQuestDeps
 	};
 
 	await writeFile(fixturePath, `${JSON.stringify(snapshot, null, '\t')}\n`, 'utf8');

@@ -2,7 +2,9 @@
 	import type { Goal, ItemGoal, SkillGoal } from '$lib/domain/types';
 	import ProgressBar from '$lib/components/goals/ProgressBar.svelte';
 	import PriceBadge from '$lib/components/items/PriceBadge.svelte';
+	import QuestRequirementTree from '$lib/components/goals/QuestRequirementTree.svelte';
 	import { categoryIcons } from '$lib/constants/categoryIcons';
+	import { buildQuestDisplayModel } from '$lib/services/questRequirements';
 
 	let {
 		goal,
@@ -18,23 +20,39 @@
 		onOpen?: () => void;
 	}>();
 
-	const directQuestReqs = $derived(
+	let expandedTopLevelQuests = $state<Record<string, boolean>>({});
+
+	function fallbackTopLevelQuestDeps() {
+		if (goal.type !== 'quest') return [];
+		const directIds = goal.requirements.directQuestIds ?? [];
+		const sourceQuestIds = directIds.length > 0 ? directIds : goal.requirements.questIds;
+		return sourceQuestIds.map((quest: string) => ({
+			quest,
+			directSkillReqs: [],
+			directQuestReqs: [],
+			children: []
+		}));
+	}
+
+	const directSkillReqs = $derived(
 		goal.type === 'quest'
-			? (goal.requirements.directQuestIds ?? goal.requirements.questIds).filter(Boolean)
-			: []
-	);
-	const cascadedQuestReqs = $derived(
-		goal.type === 'quest'
-			? (goal.requirements.cascadedQuestIds ?? []).filter(
-					(req: string) => req && !(goal.requirements.directQuestIds ?? []).includes(req)
+			? [...(goal.requirements.directSkillReqs ?? [])].sort(
+					(a, b) => b.level - a.level || a.skill.localeCompare(b.skill)
 				)
 			: []
 	);
-	const mergedSkillReqs = $derived(
+	const topLevelQuestRows = $derived(
 		goal.type === 'quest'
-			? (goal.requirements.mergedSkillReqs ?? goal.requirements.skillReqs).filter(Boolean)
+			? buildQuestDisplayModel(goal.requirements.topLevelQuestDeps ?? fallbackTopLevelQuestDeps(), {
+					completedQuestIds: goal.completedQuestReqIds,
+					userSkills: {}
+				})
 			: []
 	);
+
+	function toggleTopLevelQuest(quest: string) {
+		expandedTopLevelQuests = { ...expandedTopLevelQuests, [quest]: !expandedTopLevelQuests[quest] };
+	}
 </script>
 
 <article class="card {goal.status === 'completed' ? 'done' : ''}" data-type={goal.type}>
@@ -67,42 +85,42 @@
 			</div>
 		{:else if goal.type === 'quest'}
 			<div class="quest-reqs">
-				<div>
-					<p class="section-title">Quest Requirements (Direct)</p>
-					<ul>
-						{#if directQuestReqs.length === 0}
-							<li class="empty">None</li>
-						{:else}
-							{#each directQuestReqs as req}
-								<li>• {req}</li>
-							{/each}
+				{#each directSkillReqs as req}
+					<div class="skill-row {goal.completedSkillReqs.some((x: { skill: string; level: number }) => x.skill === req.skill && x.level >= req.level) ? 'completed' : ''}">
+						<span class="label">{req.level} {req.skill}</span>
+						{#if goal.completedSkillReqs.some((x: { skill: string; level: number }) => x.skill === req.skill && x.level >= req.level)}
+							<span class="status complete">Completed</span>
 						{/if}
-					</ul>
-				</div>
-				<div>
-					<p class="section-title">Quest Requirements (From Prereqs)</p>
-					<ul>
-						{#if cascadedQuestReqs.length === 0}
-							<li class="empty">None</li>
-						{:else}
-							{#each cascadedQuestReqs as req}
-								<li>• {req}</li>
-							{/each}
+					</div>
+				{/each}
+
+				{#each topLevelQuestRows as node}
+					<div class="quest-row {node.completed ? 'completed' : node.ready ? 'ready' : ''}">
+						<button
+							class="quest-toggle"
+							disabled={node.completed}
+							onclick={() => toggleTopLevelQuest(node.quest)}
+						>
+							<span>{node.completed ? '•' : expandedTopLevelQuests[node.quest] ? '▾' : '▸'}</span>
+							<span>{node.quest}</span>
+						</button>
+						{#if node.completed}
+							<span class="status complete">Completed</span>
+						{:else if node.ready}
+							<span class="status ready">Ready</span>
 						{/if}
-					</ul>
-				</div>
-				<div>
-					<p class="section-title">Skill Requirements (Merged Max)</p>
-					<ul>
-						{#if mergedSkillReqs.length === 0}
-							<li class="empty">None</li>
-						{:else}
-							{#each mergedSkillReqs as req}
-								<li>• {req.level} {req.skill}</li>
-							{/each}
-						{/if}
-					</ul>
-				</div>
+					</div>
+					{#if !node.completed && expandedTopLevelQuests[node.quest]}
+						{#each node.unmetSkills as req}
+							<div class="skill-row" style="--depth:1;">
+								<span class="label">{req.level} {req.skill}</span>
+							</div>
+						{/each}
+						{#each node.children as child}
+							<QuestRequirementTree node={child} depth={1} />
+						{/each}
+					{/if}
+				{/each}
 			</div>
 		{:else if goal.subGoals?.length}
 			<ul>
@@ -209,20 +227,47 @@
 	}
 	.quest-reqs {
 		display: grid;
-		gap: 0.45rem;
+		gap: 0.22rem;
 		text-align: left;
 	}
-	.section-title {
-		margin: 0 0 0.2rem;
-		font-size: 0.74rem;
-		font-weight: 700;
-		color: var(--text-1);
+	.quest-row,
+	.skill-row {
+		display: grid;
+		grid-template-columns: 1fr auto;
+		gap: 0.4rem;
+		align-items: center;
+		font-size: 0.82rem;
+		padding: 0.2rem 0;
 	}
-	.empty {
-		color: var(--text-3);
+	.skill-row {
+		padding-left: calc(var(--depth, 0) * 0.8rem);
 	}
-	li.complete {
+	.quest-toggle {
+		all: unset;
+		display: inline-flex;
+		gap: 0.35rem;
+		align-items: center;
+		cursor: pointer;
+	}
+	.quest-toggle:disabled {
+		cursor: default;
+	}
+	.quest-row.completed,
+	.skill-row.completed {
 		color: #87d3ac;
+	}
+	.status {
+		font-size: 0.7rem;
+		border: 1px solid var(--border);
+		padding: 0.05rem 0.3rem;
+		border-radius: var(--radius-button);
+	}
+	.status.complete {
+		color: #87d3ac;
+		border-color: color-mix(in oklab, #87d3ac, var(--border) 55%);
+	}
+	.status.ready {
+		color: var(--text-1);
 	}
 	.footer-slot {
 		margin-top: auto;
@@ -237,7 +282,7 @@
 	.progress-slot {
 		margin-top: 0;
 	}
-	button {
+	.actions button {
 		border: 1px solid var(--border);
 		background: var(--surface-2);
 		color: var(--text-1);
@@ -246,7 +291,7 @@
 		cursor: pointer;
 		font-family: var(--font-heading);
 	}
-	button.ghost {
+	.actions button.ghost {
 		background: transparent;
 	}
 </style>

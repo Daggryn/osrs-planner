@@ -10,6 +10,14 @@ export type SubGoal = {
 	parentGoalTitle?: string;
 };
 
+export type QuestDependencyNode = {
+	quest: string;
+	completed?: boolean;
+	directSkillReqs: Array<{ skill: string; level: number }>;
+	directQuestReqs: string[];
+	children: QuestDependencyNode[];
+};
+
 export type Goal = {
 	id: string;
 	type: GoalType;
@@ -41,6 +49,7 @@ export type QuestGoal = Goal & {
 		directSkillReqs?: Array<{ skill: string; level: number }>;
 		cascadedSkillReqs?: Array<{ skill: string; level: number }>;
 		mergedSkillReqs?: Array<{ skill: string; level: number }>;
+		topLevelQuestDeps?: QuestDependencyNode[];
 		questIds: string[];
 		skillReqs: Array<{ skill: string; level: number }>;
 	};

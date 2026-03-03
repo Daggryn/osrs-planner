@@ -5,7 +5,7 @@ import GoalCard from './GoalCard.svelte';
 import type { QuestGoal } from '$lib/domain/types';
 
 describe('GoalCard quest requirements', () => {
-	it('renders direct, cascaded, and merged skill requirement sections', async () => {
+	it('renders skills first and collapsible quest requirements without headers', async () => {
 		const goal: QuestGoal = {
 			id: 'quest-fremennik-exiles-test',
 			type: 'quest',
@@ -15,13 +15,27 @@ describe('GoalCard quest requirements', () => {
 			createdAt: new Date(0).toISOString(),
 			updatedAt: new Date(0).toISOString(),
 			requirements: {
-				directQuestIds: ['Heroes\' Quest'],
-				cascadedQuestIds: ['Lost City'],
-				mergedSkillReqs: [
+				directQuestIds: ["Heroes' Quest"],
+				directSkillReqs: [
 					{ skill: 'Crafting', level: 65 },
 					{ skill: 'Magic', level: 65 }
 				],
-				questIds: ['Heroes\' Quest', 'Lost City'],
+				topLevelQuestDeps: [
+					{
+						quest: "Heroes' Quest",
+						directSkillReqs: [{ skill: 'Cooking', level: 53 }],
+						directQuestReqs: ['Shield of Arrav'],
+						children: [
+							{
+								quest: 'Shield of Arrav',
+								directSkillReqs: [],
+								directQuestReqs: [],
+								children: []
+							}
+						]
+					}
+				],
+				questIds: ["Heroes' Quest"],
 				skillReqs: [
 					{ skill: 'Crafting', level: 65 },
 					{ skill: 'Magic', level: 65 }
@@ -34,11 +48,7 @@ describe('GoalCard quest requirements', () => {
 
 		render(GoalCard, { goal });
 
-		await expect.element(page.getByText('Quest Requirements (Direct)')).toBeInTheDocument();
-		await expect.element(page.getByText('Quest Requirements (From Prereqs)')).toBeInTheDocument();
-		await expect.element(page.getByText('Skill Requirements (Merged Max)')).toBeInTheDocument();
-		await expect.element(page.getByText("• Heroes' Quest")).toBeInTheDocument();
-		await expect.element(page.getByText('• Lost City')).toBeInTheDocument();
-		await expect.element(page.getByText('• 65 Crafting')).toBeInTheDocument();
+		await expect.element(page.getByText('65 Crafting')).toBeInTheDocument();
+		await expect.element(page.getByText("Heroes' Quest")).toBeInTheDocument();
 	});
 });
